@@ -85,15 +85,8 @@ class SimpleSelectQuery extends AbstractQuery {
 	}
 
 	public function fetchAll(): array {
-		$result = [];
-		$stmt = $this->connection->prepare($this->getSQL());
-		// $stmt->bindValue()...
-		if ($stmt->execute()) {
-			foreach ($stmt->fetchAll() as $record) {
-				$result[] = $this->asEntity($record);
-			}
-		}
-		return $result;
+		$stmt = $this->executeAndGetStatement();
+		return $this->connection->fetchAll($stmt, $this->classname);
 	}
 
 	/**
@@ -101,7 +94,8 @@ class SimpleSelectQuery extends AbstractQuery {
 	 * @return Entity
 	 */
 	public function fetchSingle(): Entity {
-		return $this->fetchOneRecord(true);
+		$stmt = $this->executeAndGetStatement();
+		return $this->connection->fetchSingle($stmt, $this->classname);
 	}
 
 	/**
@@ -110,31 +104,20 @@ class SimpleSelectQuery extends AbstractQuery {
 	 * @return Entity|null Null if the query did not return any records, the first instance of Entity otherwise.
 	 */
 	public function fetchFirst(): ?Entity {
-		return $this->fetchOneRecord(false);
+		$stmt = $this->executeAndGetStatement();
+		return $this->connection->fetchFirst($stmt, $this->classname);
 	}
 
-	private function fetchOneRecord(bool $strict): ?Entity {
+	private function executeAndGetStatement(): \PDOStatement {
 		$stmt = $this->connection->prepare($this->getSQL());
-		// $stmt->bindValue()...
+		//$this->bindValues($stmt);
+
 		if ($stmt->execute()) {
-			$result = $stmt->fetch();
-			if ($result === false) {
-				if ($strict) {
-					throw new RecordNotFoundException(
-						sprintf('Required record for %s was not found.', $this->tableMetadata->getClassname()));
-				} else {
-					return null;
-				}
-			} else {
-				return $this->asEntity($result);
-			}
+			return $stmt;
 		} else {
+			// @TODO in which cases does this happen?
 			throw new \RuntimeException('An error occurred');
 		}
 	}
 
-	private function asEntity(array $record): Entity {
-		$cln = $this->classname;
-		return new $cln($this->connection, $record);
-	}
 }

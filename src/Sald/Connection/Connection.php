@@ -3,7 +3,9 @@
 namespace Sald\Connection;
 
 use PDO;
+use PDOStatement;
 use Sald\Entities\Entity;
+use Sald\Exception\RecordNotFoundException;
 use Sald\Metadata\MetadataManager;
 use Sald\Metadata\TableMetadata;
 use Sald\Query\EntityQueryFactory;
@@ -50,6 +52,53 @@ class Connection extends PDO {
 
 	private function getMetadata(string $className): TableMetadata {
 		return MetadataManager::getTable($className);
+	}
+
+	public function fetchAll(PDOStatement $statement, string $classname): array {
+		$result = [];
+		foreach ($statement->fetchAll() as $record) {
+			$result[] = $this->asEntity($record, $classname);
+		}
+		return $result;
+	}
+
+	/**
+	 * Fetches a single record, accepts precisely one record to be returned and will throw an exception otherwise.
+	 * @param PDOStatement $statement The (already executed) statement for which te retrieve the result.
+	 * @param string $classname The classname for the instances to return.
+	 * @return Entity
+	 */
+	public function fetchSingle(PDOStatement $statement, string $classname): Entity {
+		return $this->fetchOneRecord($statement, $classname, true);
+	}
+
+	/**
+	 * Similar to fetchSingle, but returns null if no records are available and the first record if the query returns
+	 * multiple records.
+	 * @param PDOStatement $statement The (already executed) statement for which te retrieve the result.
+	 * @param string $classname The classname for the instances to return.
+	 * @return Entity|null Null if the query did not return any records, the first instance of Entity otherwise.
+	 */
+	public function fetchFirst(PDOStatement $statement, string $classname): ?Entity {
+		return $this->fetchOneRecord($statement, $classname, false);
+	}
+
+	private function fetchOneRecord(PDOStatement $statement, string $classname, bool $strict): ?Entity {
+		$result = $statement->fetch();
+		if ($result === false) {
+			if ($strict) {
+				throw new RecordNotFoundException(
+					sprintf('Required record for %s was not found.', $classname));
+			} else {
+				return null;
+			}
+		} else {
+			return $this->asEntity($result, $classname);
+		}
+	}
+
+	private function asEntity(array $record, string $classname): Entity {
+		return new $classname($this, $record);
 	}
 
 }
