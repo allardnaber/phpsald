@@ -5,6 +5,7 @@ namespace Sald\Query;
 use PDOStatement;
 use Sald\Connection\Connection;
 use Sald\Metadata\TableMetadata;
+use Sald\Query\Expression\Expression;
 
 abstract class AbstractQuery {
 	
@@ -56,7 +57,9 @@ abstract class AbstractQuery {
 
 	protected function bindValues(PDOStatement $statement): void {
 		foreach ($this->parameters as $key => $value) {
-			$statement->bindValue($key, $value, \PDO::PARAM_STR);
+			if (!($value instanceof Expression)) {
+				$statement->bindValue($key, $value, \PDO::PARAM_STR);
+			}
 		}
 	}
 }

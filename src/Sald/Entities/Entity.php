@@ -5,6 +5,7 @@ namespace Sald\Entities;
 use Sald\Connection\Connection;
 use Sald\Connection\ConnectionManager;
 use Sald\Metadata\MetadataManager;
+use Sald\Query\Expression\Expression;
 use Sald\Query\SimpleInsertQuery;
 
 class Entity {
@@ -33,7 +34,7 @@ class Entity {
 			throw new \RuntimeException(
 				sprintf('Property %s is the id field of %s, and thus readonly.', $name, static::class));
 		}
-		if (!isset($this->fields[$name]) || $this->fields[$name] !== $value) { // $value instanceof DbExpression ||
+		if (!isset($this->fields[$name]) || $value instanceof Expression || $this->fields[$name] !== $value) {
 			$this->fields[$name] = $value;
 			$this->dirty[] = $name;
 		}

@@ -2,6 +2,8 @@
 
 namespace Sald\Query;
 
+use Sald\Query\Expression\Expression;
+
 class SimpleUpdateQuery extends AbstractQuery {
 	private array $updateKeys = [];
 	public function set(string $key, mixed $value): self {
@@ -11,7 +13,15 @@ class SimpleUpdateQuery extends AbstractQuery {
 	}
 
 	protected function buildQuery(): string {
-		$parts = array_map(fn($e) => $e . '=:update_' . $e , $this->updateKeys);
+		$parts = [];
+		foreach ($this->updateKeys as $key) {
+			$fkey = 'update_' . $key;
+			if ($this->parameters[$fkey] instanceof Expression) {
+				$parts[] = sprintf('%s=(%s)', $key, $this->parameters[$fkey]->getExpression());
+			} else {
+				$parts[] = sprintf('%s=%s', $key, $fkey);
+			}
+		}
 		$q = sprintf('UPDATE %s SET %s',
 			$this->from,
 			join(', ', $parts)
