@@ -3,7 +3,6 @@
 namespace Sald\Query;
 
 use Sald\Entities\Entity;
-use Sald\Exception\RecordNotFoundException;
 
 class SimpleSelectQuery extends AbstractQuery {
 
@@ -76,7 +75,7 @@ class SimpleSelectQuery extends AbstractQuery {
 			$this->from,
 			$this->alias ?? '',
 			join(' ', $this->join),
-			empty($this->where)   ? '' : 'WHERE ' . join(' AND ', $this->where),
+			$this->getWhereClause(),
 			empty($this->groupBy) ? '' : 'GROUP BY ' . join(', ', $this->groupBy),
 			empty($this->orderBy) ? '' : 'ORDER BY ' . join(', ', $this->orderBy),
 			$this->limit === -1   ? '' : 'LIMIT ' . $this->limit,
@@ -110,8 +109,7 @@ class SimpleSelectQuery extends AbstractQuery {
 
 	private function executeAndGetStatement(): \PDOStatement {
 		$stmt = $this->connection->prepare($this->getSQL());
-		//$this->bindValues($stmt);
-
+		$this->bindValues($stmt);
 		if ($stmt->execute()) {
 			return $stmt;
 		} else {

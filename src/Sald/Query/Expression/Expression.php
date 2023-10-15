@@ -14,7 +14,7 @@ class Expression {
 		return $this->expression;
 	}
 
-	public function __toString(): string {
+	public function getSQL(): string {
 		return $this->expression;
 	}
 }
