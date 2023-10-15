@@ -64,9 +64,13 @@ class Entity {
 		return $value instanceof Expression ? $value : null;
 	}
 
+	public function getId(): mixed {
+		return $this->fields[$this->idColumn] ?? null;
+	}
+
 	public function __get(string $name): mixed {
 		$value = $this->fields[$name] ?? null;
-		return $value instanceof Expression ? 'expr:{' . $value . '}' : $value;
+		return $value instanceof Expression ? 'expr:{' . $value->getSQL() . '}' : $value;
 	}
 
 	public function __getAllFields(): array {

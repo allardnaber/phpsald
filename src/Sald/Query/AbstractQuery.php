@@ -63,6 +63,11 @@ abstract class AbstractQuery {
 		return $this;
 	}
 
+	public function whereId(Comparator $comparator, mixed $value): self {
+		$idField = $this->tableMetadata->getIdColumnName();
+		return $this->where($idField, $comparator, $value);
+	}
+
 	protected function getWhereClause(): string {
 		if (empty($this->where)) {
 			return '';
