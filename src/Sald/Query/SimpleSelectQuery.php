@@ -10,37 +10,47 @@ class SimpleSelectQuery extends AbstractQuery {
 	private array $orderBy = [];
 	private array $groupBy = [];
 
+	private int $offset = -1;
+	private int $limit = -1;
+
 	public function alias(string $alias): self {
-		$this->setDirty();
 		$this->alias = $alias;
+		$this->setDirty();
 		return $this;
 	}
 	
 	public function fields(array|string $field): self {
-		$this->setDirty();
 		if (is_array($field)) {
 			$this->selectFields = array_merge($this->selectFields, $field);
 		} else {
 			$this->selectFields[] = $field;
 		}
+		$this->setDirty();
 		return $this;
 	}
 	
 	public function join(string $table, string $condition, string $direction = 'INNER'): self {
-		$this->setDirty();
 		$this->join[] = $this->buildJoinClause($direction, $table, $condition);
+		$this->setDirty();
 		return $this;
 	}
 
 	public function orderBy(string $orderBy, string $direction = 'ASC', bool $caseSensitive = false): self {
-		$this->setDirty();
 		$this->orderBy[] = $this->buildOrderByClause($orderBy, $direction, $caseSensitive);
+		$this->setDirty();
 		return $this;
 	}
 
 	public function groupBy(string $groupBy): self {
-		$this->setDirty();
 		$this->groupBy[] = $groupBy;
+		$this->setDirty();
+		return $this;
+	}
+
+	public function limit(int $limit = -1, int $offset = -1): self {
+		$this->setDirty();
+		$this->offset = $offset;
+		$this->limit = $limit;
 		return $this;
 	}
 
@@ -58,14 +68,16 @@ class SimpleSelectQuery extends AbstractQuery {
 	
 	protected function buildQuery(): string {
 		return sprintf(
-			'SELECT %s FROM %s %s %s %s %s %s',
+			'SELECT %s FROM %s %s %s %s %s %s %s %s',
 			empty($this->selectFields) ? '*' : join(', ', $this->selectFields),
 			$this->from,
 			$this->alias ?? '',
 			join(' ', $this->join),
 			empty($this->where)   ? '' : 'WHERE ' . join(' AND ', $this->where),
 			empty($this->groupBy) ? '' : 'GROUP BY ' . join(', ', $this->groupBy),
-			empty($this->orderBy) ? '' : 'ORDER BY ' . join(', ', $this->orderBy)
+			empty($this->orderBy) ? '' : 'ORDER BY ' . join(', ', $this->orderBy),
+			$this->limit === -1 ? '' : 'LIMIT ' . $this->limit,
+			$this->offset === -1 ? '' : 'OFFSET ' . $this->offset,
 		);
 	}
 
