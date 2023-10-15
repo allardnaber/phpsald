@@ -1,0 +1,80 @@
+<?php
+
+namespace Sald\Query;
+
+class SimpleSelectQuery extends AbstractQuery {
+
+	private $alias = null;
+	private $selectFields = [];
+	private $join = [];
+	private $orderBy = [];
+	private $groupBy = [];
+
+	public function setTableAlias(string $alias): void {
+		$this->setDirty();
+		$this->alias = $alias;
+	}
+	
+	public function fields(array|string $field): self {
+		$this->setDirty();
+		if (is_array($field)) {
+			$this->selectFields = array_merge($this->selectFields, $field);
+		} else {
+			$this->selectFields[] = $field;
+		}
+		return $this;
+	}
+	
+	public function join($table, $condition, $direction = 'INNER'): self {
+		$this->setDirty();
+		$this->join[] = $this->buildJoinClause($direction, $table, $condition);
+		return $this;
+	}
+
+	public function orderBy($orderBy, $direction = 'ASC', $caseSensitive = false): self {
+		$this->setDirty();
+		$this->orderBy[] = $this->buildOrderByClause($orderBy, $direction, $caseSensitive);
+		return $this;
+	}
+
+	public function groupBy($groupBy): self {
+		$this->setDirty();
+		$this->groupBy[] = $groupBy;
+		return $this;
+	}
+
+	public function getTableName() {
+		return $this->alias ?? $this->from;
+	}
+
+	private function buildJoinClause($direction, $table, $condition): string {
+		return sprintf('%s JOIN %s ON %s', $direction, $table, $condition);
+	}
+
+	private function buildOrderByClause($orderBy, $direction, $caseSensitive): string {
+		return sprintf('%s%s %s', $orderBy, $caseSensitive ?  '' : ' COLLATE NOCASE', $direction);
+	}
+	
+	protected function buildQuery(): string {
+		return sprintf(
+			'SELECT %s FROM %s %s %s %s %s %s',
+			empty($this->selectFields) ? '*' : join(', ', $this->selectFields),
+			$this->from,
+			$this->alias ?? '',
+			join(' ', $this->join),
+			empty($this->where)   ? '' : 'WHERE ' . join(' AND ', $this->where),
+			empty($this->groupBy) ? '' : 'GROUP BY ' . join(', ', $this->groupBy),
+			empty($this->orderBy) ? '' : 'ORDER BY ' . join(', ', $this->orderBy)
+		);
+	}
+
+	public function fetchAll(): array {
+		$stmt = $this->connection->prepare($this->getSQL());
+		// $stmt->bindValue()...
+		if ($stmt->execute()) {
+			$result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+			return $this->connection->fetchAllAsObjects($result, $this->classname);
+		}
+
+	}
+}

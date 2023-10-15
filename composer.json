@@ -1,0 +1,21 @@
+{
+  "name": "allardnaber/phpsald",
+  "description": "PHP Simple Abstraction Layer for Databases",
+  "type": "library",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "Allard Naber",
+      "email": "allardnaber@gmail.com"
+    }
+  ],
+  "require": {
+    "ext-pdo": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "Sald\\": "src/Sald/"
+    }
+  }
+}
