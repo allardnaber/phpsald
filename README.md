@@ -3,7 +3,7 @@ PHP Simple Abstraction Layer for Databases
 
 **Warning:** VERY MUCH Work-in-progress
 
-## Usage
+## Basic usage with entities
 The goal of this abstraction layer is to take away (some of) the boilerplate for
 interacting with several types of databases and result sets.
 
@@ -69,14 +69,49 @@ foreach ($entities as $entity) {
 }
 ```
 
+Update an entity as follows:
+```php
+$entity = Sald::select(My_Entity::class)
+    ->where('id = 3')
+    ->fetchSingle();
+
+$entity->name = 'Dummy';
+$entity->update();
+```
+
+Or delete another entity:
+```php
+$entity = Sald::select(My_Entity::class)
+    ->where('id = 4')
+    ->fetchSingle();
+
+$entity->delete();
+```
+
 Create new entities:
 ```php
 $entity = new My_Entity();
 $entity->age = 37;
-$entity->name = 'Dummy';
+$entity->name = 'A new dummy';
  // performs insert on default connection
 $entity->insert();
 
 // show inserted id:
 printf("Entity was created with id %d.\n", $entity->id);
 ```
+
+## Advanced usage
+Use the following methods to create extensible queries:
+```php
+$insertQuery = Sald::insert($classname);
+$updateQuery = Sald::update($classname);
+$deleteQuery = Sald::delete($classname);
+```
+
+These extensible queries allow you to add more advanced logic to the queries,
+like updating or deleting a range of records.
+
+## Expert usage
+The `Connection` class is an extension of the native [`PDO`](https://www.php.net/manual/en/book.pdo.php) class, so custom queries
+can be used. Use the `fetchAll` or `fetchSingle` methods to convert the result set
+into entities.
