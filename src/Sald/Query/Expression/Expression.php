@@ -13,4 +13,8 @@ class Expression {
 	public function getExpression(): string {
 		return $this->expression;
 	}
+
+	public function __toString(): string {
+		return $this->expression;
+	}
 }

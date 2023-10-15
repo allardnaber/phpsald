@@ -16,7 +16,8 @@ class EntityQueryFactory {
 		$insertFields = array_intersect($entity->getDirtyFields(), $metadata->getEditableFields());
 
 		foreach ($insertFields as $field) {
-			$result->set($field, $entity->$field);
+			$expr = $entity->getExpression($field);
+			$result->set($field, $expr ?? $entity->$field);
 		}
 		return $result;
 	}
@@ -30,7 +31,8 @@ class EntityQueryFactory {
 		$updateFields = array_intersect($entity->getDirtyFields(), $metadata->getEditableFields());
 
 		foreach ($updateFields as $field) {
-			$result->set($field, $entity->$field);
+			$expr = $entity->getExpression($field);
+			$result->set($field, $expr ?? $entity->$field);
 		}
 		return $result;
 	}

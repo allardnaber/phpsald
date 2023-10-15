@@ -42,6 +42,7 @@ class Connection extends PDO {
 	public function insertEntity(Entity $entity): SimpleInsertQuery {
 		return EntityQueryFactory::insert($this,  $this->getMetadata($entity::class), $entity);
 	}
+
 	public function updateEntity(Entity $entity): SimpleUpdateQuery {
 		return EntityQueryFactory::update($this,  $this->getMetadata($entity::class), $entity);
 	}
@@ -54,6 +55,12 @@ class Connection extends PDO {
 		return MetadataManager::getTable($className);
 	}
 
+	/**
+	 * Returns all entities that the query returned.
+	 * @param PDOStatement $statement The (already executed) statement for which te retrieve the results.
+	 * @param string $classname The classname for the instances to return.
+	 * @return Entity[] The entities that were returned by the query.
+	 */
 	public function fetchAll(PDOStatement $statement, string $classname): array {
 		$result = [];
 		foreach ($statement->fetchAll() as $record) {
@@ -65,24 +72,31 @@ class Connection extends PDO {
 	/**
 	 * Fetches a single record, accepts precisely one record to be returned and will throw an exception otherwise.
 	 * @param PDOStatement $statement The (already executed) statement for which te retrieve the result.
-	 * @param string $classname The classname for the instances to return.
-	 * @return Entity
+	 * @param string $classname The classname for the instance to return.
+	 * @return Entity The first instance of Entity
+	 * @throws RecordNotFoundException If the record is not found.
 	 */
 	public function fetchSingle(PDOStatement $statement, string $classname): Entity {
 		return $this->fetchOneRecord($statement, $classname, true);
 	}
 
 	/**
-	 * Similar to fetchSingle, but returns null if no records are available and the first record if the query returns
-	 * multiple records.
+	 * Fetches a single record (the first if the query returns multiple records) or null if no records are available.
 	 * @param PDOStatement $statement The (already executed) statement for which te retrieve the result.
-	 * @param string $classname The classname for the instances to return.
+	 * @param string $classname The classname for the instance to return.
 	 * @return Entity|null Null if the query did not return any records, the first instance of Entity otherwise.
 	 */
 	public function fetchFirst(PDOStatement $statement, string $classname): ?Entity {
 		return $this->fetchOneRecord($statement, $classname, false);
 	}
 
+	/**
+	 * @param PDOStatement $statement
+	 * @param string $classname
+	 * @param bool $strict Whether to throw an exception if no record was found.
+	 * @return Entity|null
+	 * @throws RecordNotFoundException If no record was found and strict mode is on.
+	 */
 	private function fetchOneRecord(PDOStatement $statement, string $classname, bool $strict): ?Entity {
 		$result = $statement->fetch();
 		if ($result === false) {
