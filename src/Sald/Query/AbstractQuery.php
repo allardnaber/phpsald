@@ -67,11 +67,7 @@ abstract class AbstractQuery {
 		if (empty($this->where)) {
 			return '';
 		}
-		$result = 'WHERE ' . join(' AND ', array_map(fn($e) => $e->getSQL(), $this->where));
-		echo $result;
-		return $result;
-		//die();
-
+		return 'WHERE ' . join(' AND ', array_map(fn($e) => $e->getSQL(), $this->where));
 	}
 
 	public function parameter(string $key, mixed $value): self {
