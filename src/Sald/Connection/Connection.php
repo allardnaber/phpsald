@@ -6,10 +6,7 @@ use PDO;
 use Sald\Entities\Entity;
 use Sald\Metadata\MetadataManager;
 use Sald\Metadata\TableMetadata;
-use Sald\Query\EntityDeleteQuery;
-use Sald\Query\EntityInsertQuery;
 use Sald\Query\EntityQueryFactory;
-use Sald\Query\EntityUpdateQuery;
 use Sald\Query\SimpleDeleteQuery;
 use Sald\Query\SimpleInsertQuery;
 use Sald\Query\SimpleSelectQuery;
@@ -17,8 +14,12 @@ use Sald\Query\SimpleUpdateQuery;
 
 class Connection extends PDO {
 
-
-
+	public function __construct(string $dsn, ?string $username = null, ?string $password = null, ?array $options = null) {
+		$options = $options ?? [];
+		$options[PDO::ATTR_ERRMODE] = PDO::ERRMODE_EXCEPTION;
+		$options[PDO::ATTR_DEFAULT_FETCH_MODE] = PDO::FETCH_ASSOC;
+		parent::__construct($dsn, $username, $password, $options);
+	}
 
 	public function select(string $className): SimpleSelectQuery {
 		return new SimpleSelectQuery($this, $this->getMetadata($className));
