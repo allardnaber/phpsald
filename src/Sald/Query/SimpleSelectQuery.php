@@ -79,8 +79,8 @@ class SimpleSelectQuery extends AbstractQuery {
 			empty($this->where)   ? '' : 'WHERE ' . join(' AND ', $this->where),
 			empty($this->groupBy) ? '' : 'GROUP BY ' . join(', ', $this->groupBy),
 			empty($this->orderBy) ? '' : 'ORDER BY ' . join(', ', $this->orderBy),
-			$this->limit === -1 ? '' : 'LIMIT ' . $this->limit,
-			$this->offset === -1 ? '' : 'OFFSET ' . $this->offset,
+			$this->limit === -1   ? '' : 'LIMIT ' . $this->limit,
+			$this->offset === -1  ? '' : 'OFFSET ' . $this->offset,
 		);
 	}
 
