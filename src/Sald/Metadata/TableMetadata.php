@@ -20,7 +20,7 @@ class TableMetadata {
 			$this->classname = $classname;
 			$reflection = new ReflectionClass($classname);
 			$this->findTableName($reflection);
-			//$this->findIdColumn($reflection);
+			$this->findIdColumn($reflection);
 
 		} catch (\ReflectionException $e) {
 			throw new ClassNotFoundException(
@@ -46,12 +46,12 @@ class TableMetadata {
 	}
 
 	private function findIdColumn(ReflectionClass $reflection): void {
-		$idColumnAttr = $reflection->getAttributes(IdColumn::class);
-		if (count($idColumnAttr) > 0) {
-			$arguments = $idColumnAttr[0]->getArguments();
-			if (count($arguments) > 0) {
-				$this->idColumnName = $arguments[0];
-				$this->idColumnType = $arguments[1] ?? PDO::PARAM_INT;
+		foreach ($reflection->getProperties() as $property) {
+			$idColumnAttr = $property->getAttributes(IdColumn::class);
+			if (count($idColumnAttr) > 0) {
+				$this->idColumnName = $property->getName();
+				$arguments = $idColumnAttr[0]->getArguments();
+				$this->idColumnType = count($arguments) > 0 ? $arguments[0] : PDO::PARAM_INT;
 			}
 		}
 	}
