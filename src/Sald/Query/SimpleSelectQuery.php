@@ -66,7 +66,7 @@ class SimpleSelectQuery extends AbstractQuery {
 	}
 
 	private function buildOrderByClause(string $orderBy, string $direction, bool $caseSensitive): string {
-		return sprintf('%s%s %s', $orderBy, $caseSensitive ?  '' : ' COLLATE NOCASE', $direction);
+		return sprintf('%s%s %s', $orderBy, $caseSensitive ?  '' : '', $direction); // @TODO Case sensitive
 	}
 	
 	protected function buildQuery(): string {
