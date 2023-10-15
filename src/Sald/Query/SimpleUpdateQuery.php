@@ -19,7 +19,7 @@ class SimpleUpdateQuery extends AbstractQuery {
 			if ($this->parameters[$fkey] instanceof Expression) {
 				$parts[] = sprintf('%s=(%s)', $key, $this->parameters[$fkey]->getExpression());
 			} else {
-				$parts[] = sprintf('%s=%s', $key, $fkey);
+				$parts[] = sprintf('%s=:%s', $key, $fkey);
 			}
 		}
 		$q = sprintf('UPDATE %s SET %s',
