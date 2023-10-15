@@ -64,3 +64,15 @@ foreach ($entities as $entity) {
         $entity->age);
 }
 ```
+
+Create new entities:
+```php
+$entity = new My_Entity();
+$entity->age = 37;
+$entity->name = 'Dummy';
+ // performs insert on default connection
+$entity->insert();
+
+// show inserted id:
+printf("Entity was created with id %d.\n", $entity->id);
+```
