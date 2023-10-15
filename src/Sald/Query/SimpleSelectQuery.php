@@ -4,15 +4,16 @@ namespace Sald\Query;
 
 class SimpleSelectQuery extends AbstractQuery {
 
-	private $alias = null;
-	private $selectFields = [];
-	private $join = [];
-	private $orderBy = [];
-	private $groupBy = [];
+	private ?string $alias = null;
+	private array $selectFields = [];
+	private array $join = [];
+	private array $orderBy = [];
+	private array $groupBy = [];
 
-	public function setTableAlias(string $alias): void {
+	public function alias(string $alias): self {
 		$this->setDirty();
 		$this->alias = $alias;
+		return $this;
 	}
 	
 	public function fields(array|string $field): self {
@@ -43,7 +44,7 @@ class SimpleSelectQuery extends AbstractQuery {
 		return $this;
 	}
 
-	public function getTableName() {
+	public function getTableName(): string {
 		return $this->alias ?? $this->from;
 	}
 
