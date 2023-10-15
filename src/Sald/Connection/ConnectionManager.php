@@ -14,7 +14,7 @@ class ConnectionManager {
 
 	public static function get(?Configuration $config = null): Connection {
 		if ($config === null) {
-			if (count(self::$connectionMap) !== 0) {
+			if (count(self::$connectionMap) === 0) {
 				throw new NoConnectionException(
 					'Connection config cannot be left empty as no connections are available yet.');
 			} elseif (count(self::$connectionMap) !== 1) {
