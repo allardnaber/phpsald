@@ -39,13 +39,17 @@ as members, but can be defined using PHPDoc style comments, if your IDE supports
 ```php
 #[Table('my_table')]
 /**
+ * @property int $id;
  * @property string $name;
  * @property int $age; 
  */
 class My_Entity extends Entity {
     
     #[IdColumn]
-    public int $id;
+    protected int $id;
+    
+    protected string $name;
+    protected int $age;
 }
 ```
 
