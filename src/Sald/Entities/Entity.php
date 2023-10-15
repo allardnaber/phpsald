@@ -7,6 +7,7 @@ use Sald\Connection\ConnectionManager;
 use Sald\Metadata\MetadataManager;
 use Sald\Query\Expression\Expression;
 use Sald\Query\SimpleInsertQuery;
+use Sald\Query\SimpleSelectQuery;
 
 class Entity {
 
@@ -46,6 +47,10 @@ class Entity {
 
 	public function __getAllFields(): array {
 		return $this->fields;
+	}
+
+	public static function select(?Connection $connection = null): SimpleSelectQuery {
+		return ConnectionManager::get()->select(static::class);
 	}
 
 	public function update(?Connection $connection = null): bool {
