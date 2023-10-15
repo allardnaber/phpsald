@@ -2,6 +2,7 @@
 
 namespace Sald\Query;
 
+use PDOStatement;
 use Sald\Connection\Connection;
 use Sald\Metadata\TableMetadata;
 
@@ -11,6 +12,8 @@ abstract class AbstractQuery {
 	private string $query;
 	private bool $dirty = true;
 	protected array $where = [];
+
+	protected array $parameters = [];
 
 	protected TableMetadata $tableMetadata;
 
@@ -40,9 +43,21 @@ abstract class AbstractQuery {
 		return $this;
 	}
 
+	public function parameter(string $key, mixed $value): self {
+		$this->parameters[$key] = $value;
+		return $this;
+	}
+
 	
 	protected function setDirty(): void {
 		$this->dirty = true;
+	}
+
+
+	protected function bindValues(PDOStatement $statement): void {
+		foreach ($this->parameters as $key => $value) {
+			$statement->bindValue($key, $value, \PDO::PARAM_STR);
+		}
 	}
 }
 	

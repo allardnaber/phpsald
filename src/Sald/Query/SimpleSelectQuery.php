@@ -26,19 +26,19 @@ class SimpleSelectQuery extends AbstractQuery {
 		return $this;
 	}
 	
-	public function join($table, $condition, $direction = 'INNER'): self {
+	public function join(string $table, string $condition, string $direction = 'INNER'): self {
 		$this->setDirty();
 		$this->join[] = $this->buildJoinClause($direction, $table, $condition);
 		return $this;
 	}
 
-	public function orderBy($orderBy, $direction = 'ASC', $caseSensitive = false): self {
+	public function orderBy(string $orderBy, string $direction = 'ASC', bool $caseSensitive = false): self {
 		$this->setDirty();
 		$this->orderBy[] = $this->buildOrderByClause($orderBy, $direction, $caseSensitive);
 		return $this;
 	}
 
-	public function groupBy($groupBy): self {
+	public function groupBy(string $groupBy): self {
 		$this->setDirty();
 		$this->groupBy[] = $groupBy;
 		return $this;
@@ -48,11 +48,11 @@ class SimpleSelectQuery extends AbstractQuery {
 		return $this->alias ?? $this->from;
 	}
 
-	private function buildJoinClause($direction, $table, $condition): string {
+	private function buildJoinClause(string $direction, string $table, string $condition): string {
 		return sprintf('%s JOIN %s ON %s', $direction, $table, $condition);
 	}
 
-	private function buildOrderByClause($orderBy, $direction, $caseSensitive): string {
+	private function buildOrderByClause(string $orderBy, string $direction, bool $caseSensitive): string {
 		return sprintf('%s%s %s', $orderBy, $caseSensitive ?  '' : ' COLLATE NOCASE', $direction);
 	}
 	

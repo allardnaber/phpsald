@@ -6,7 +6,6 @@ use Sald\Connection\Connection;
 use Sald\Connection\ConnectionManager;
 use Sald\Metadata\MetadataManager;
 use Sald\Query\SimpleInsertQuery;
-use Sald\Sald;
 
 class Entity {
 
@@ -41,11 +40,13 @@ class Entity {
 		return $this->fields;
 	}
 
-	public function save(?Connection $connection = null): bool {
-		if ($connection !== null) {
-			$this->connection = $connection;
+	public function update(?Connection $connection = null): bool {
+		$this->connection = $connection ?? $this->connection ?? ConnectionManager::get();
+		$query = $this->connection->updateEntity($this);
+		if (($result = $query->execute()) === true) {
+			$this->resetDirtyState();
 		}
-		throw new \RuntimeException('save has not yet been implemented');
+		return $result;
 	}
 
 	/**
@@ -55,11 +56,34 @@ class Entity {
 	 */
 	public function insert(?Connection $connection = null): bool {
 		$this->connection = $connection ?? $this->connection ?? ConnectionManager::get();
-		$query = $this->connection->insert($this);
-		return $query->execute();
+		$query = $this->connection->insertEntity($this);
+		if (($result = $query->execute()) === true) {
+			$idColumn = MetadataManager::getTable(static::class)->getIdColumnName();
+			$this->fields[$idColumn] = $this->connection->lastInsertId();
+			$this->resetDirtyState();
+		}
+		return $result;
 	}
 
-	public function resetDirtyState(): void {
+	public function delete(?Connection $connection = null): bool {
+		$this->connection = $connection ?? $this->connection ?? ConnectionManager::get();
+		$query = $this->connection->deleteEntity($this);
+		if (($result = $query->execute()) === true) {
+			$idColumn = MetadataManager::getTable(static::class)->getIdColumnName();
+			unset($this->fields[$idColumn]);
+			$this->resetDirtyState();
+		}
+		return $result;
+	}
+
+	/**
+	 * @return string[]
+	 */
+	public function getDirtyFields(): array {
+		return $this->dirty;
+	}
+
+	private function resetDirtyState(): void {
 		$this->dirty = [];
 	}
 }

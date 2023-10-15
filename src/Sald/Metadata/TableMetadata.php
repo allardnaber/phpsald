@@ -13,6 +13,11 @@ class TableMetadata {
 	private string $idColumnName = 'id';
 	private int $idColumnType = PDO::PARAM_INT;
 
+	/**
+	 * @var string[] list of editable fields
+	 */
+	private array $editable = [];
+
 	private string $classname;
 
 	public function __construct($classname) {
@@ -21,6 +26,7 @@ class TableMetadata {
 			$reflection = new ReflectionClass($classname);
 			$this->findTableName($reflection);
 			$this->findIdColumn($reflection);
+			$this->findEditableFields($reflection);
 
 		} catch (\ReflectionException $e) {
 			throw new ClassNotFoundException(
@@ -33,6 +39,11 @@ class TableMetadata {
 	public function getIdColumnName(): string { return $this->idColumnName; }
 	public function getIdColumnType(): int { return $this->idColumnType; }
 	public function getClassname(): string { return $this->classname; }
+
+	/**
+	 * @return string[]
+	 */
+	public function getEditableFields(): array { return $this->editable; }
 
 	private function findTableName(ReflectionClass $reflection): void {
 		$this->tableName = $reflection->getShortName(); // use as backup
@@ -55,4 +66,13 @@ class TableMetadata {
 			}
 		}
 	}
+
+	private function findEditableFields(ReflectionClass $reflection): void {
+		foreach ($reflection->getProperties() as $property) {
+			if ($property->getName() !== $this->idColumnName) {
+				$this->editable[] = $property->getName();
+			}
+		}
+	}
+
 }
