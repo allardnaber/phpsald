@@ -2,6 +2,9 @@
 
 namespace Sald\Query;
 
+use Sald\Entities\Entity;
+use Sald\Exception\RecordNotFoundException;
+
 class SimpleSelectQuery extends AbstractQuery {
 
 	private ?string $alias = null;
@@ -82,12 +85,56 @@ class SimpleSelectQuery extends AbstractQuery {
 	}
 
 	public function fetchAll(): array {
+		$result = [];
 		$stmt = $this->connection->prepare($this->getSQL());
 		// $stmt->bindValue()...
 		if ($stmt->execute()) {
-			$result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-			return $this->connection->fetchAllAsObjects($result, $this->classname);
+			foreach ($stmt->fetchAll() as $record) {
+				$result[] = $this->asEntity($record);
+			}
 		}
+		return $result;
+	}
 
+	/**
+	 * Fetches a single record, accepts precisely one record to be returned and will throw an exception otherwise.
+	 * @return Entity
+	 */
+	public function fetchSingle(): Entity {
+		return $this->fetchOneRecord(true);
+	}
+
+	/**
+	 * Similar to fetchSingle, but returns null if no records are available and the first record if the query returns
+	 * multiple records.
+	 * @return Entity|null Null if the query did not return any records, the first instance of Entity otherwise.
+	 */
+	public function fetchFirst(): ?Entity {
+		return $this->fetchOneRecord(false);
+	}
+
+	private function fetchOneRecord(bool $strict): ?Entity {
+		$stmt = $this->connection->prepare($this->getSQL());
+		// $stmt->bindValue()...
+		if ($stmt->execute()) {
+			$result = $stmt->fetch();
+			if ($result === false) {
+				if ($strict) {
+					throw new RecordNotFoundException(
+						sprintf('Required record for %s was not found.', $this->tableMetadata->getClassname()));
+				} else {
+					return null;
+				}
+			} else {
+				return $this->asEntity($result);
+			}
+		} else {
+			throw new \RuntimeException('An error occurred');
+		}
+	}
+
+	private function asEntity(array $record): Entity {
+		$cln = $this->classname;
+		return new $cln($this->connection, $record);
 	}
 }

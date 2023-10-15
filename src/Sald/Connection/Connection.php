@@ -48,19 +48,8 @@ class Connection extends PDO {
 		return EntityQueryFactory::delete($this, $this->getMetadata($entity::class), $entity);
 	}
 
-	public function fetchAllAsObjects(array $records, string $classname): array {
-		$result = [];
-		foreach ($records as $record) {
-			$result[] = new $classname($this, $record);
-		}
-
-		return $result;
-	}
-
-
 	private function getMetadata(string $className): TableMetadata {
 		return MetadataManager::getTable($className);
 	}
-
 
 }
