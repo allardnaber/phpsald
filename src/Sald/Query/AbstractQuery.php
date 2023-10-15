@@ -17,10 +17,10 @@ abstract class AbstractQuery {
 	protected string $classname;
 	protected Connection $connection;
 	
-	public function __construct(Connection $connection, TableMetadata $metadata, string $className) {
+	public function __construct(Connection $connection, TableMetadata $metadata) {
 		$this->connection = $connection;
 		$this->tableMetadata = $metadata;
-		$this->classname = $className;
+		$this->classname = $metadata->getClassname();
 		$this->from = $metadata->getTableName();
 	}
 

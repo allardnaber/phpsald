@@ -13,11 +13,11 @@ class TableMetadata {
 	private string $idColumnName = 'id';
 	private int $idColumnType = PDO::PARAM_INT;
 
-	/**
-	 * @throws InvalidDbObjectException
-	 */
-	public function __construct($classname = null) {
+	private string $classname;
+
+	public function __construct($classname) {
 		try {
+			$this->classname = $classname;
 			$reflection = new ReflectionClass($classname);
 			$this->findTableName($reflection);
 			//$this->findIdColumn($reflection);
@@ -32,6 +32,7 @@ class TableMetadata {
 	public function getTableName(): string { return $this->tableName; }
 	public function getIdColumnName(): string { return $this->idColumnName; }
 	public function getIdColumnType(): int { return $this->idColumnType; }
+	public function getClassname(): string { return $this->classname; }
 
 	private function findTableName(ReflectionClass $reflection): void {
 		$this->tableName = $reflection->getShortName(); // use as backup

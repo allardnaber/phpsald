@@ -13,8 +13,7 @@ class Connection extends PDO {
 
 
 	public function select(string $className): SimpleSelectQuery {
-		//$tableName = ->getTableName();
-		return new SimpleSelectQuery($this, $this->getMetadata($className), $className);
+		return new SimpleSelectQuery($this, $this->getMetadata($className));
 	}
 
 	public function fetchAllAsObjects(array $records, string $classname): array {
