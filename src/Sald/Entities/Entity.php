@@ -12,6 +12,8 @@ class Entity {
 	private ?Connection $connection = null;
 	private array $fields = [];
 
+	private string $idColumn;
+
 	/**
 	 * Keep track of updated fields.
 	 * @var string[]
@@ -23,9 +25,14 @@ class Entity {
 		foreach ($fields as $key => $value) {
 			$this->fields[$key] = $value;
 		}
+		$this->idColumn = MetadataManager::getTable(static::class)->getIdColumnName();
 	}
 
 	public function __set(string $name, mixed $value): void {
+		if ($name === $this->idColumn) {
+			throw new \RuntimeException(
+				sprintf('Property %s is the id field of %s, and thus readonly.', $name, static::class));
+		}
 		if (!isset($this->fields[$name]) || $this->fields[$name] !== $value) { // $value instanceof DbExpression ||
 			$this->fields[$name] = $value;
 			$this->dirty[] = $name;
