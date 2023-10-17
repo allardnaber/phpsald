@@ -49,7 +49,7 @@ abstract class AbstractQuery {
 		return $this;
 	}
 
-	public function where(string $field, Comparator $comparator, mixed $value): self {
+	public function where(string $field, mixed $value, Comparator $comparator = Comparator::EQ): self {
 		$this->setDirty();
 
 		if ($value instanceof Expression) {
@@ -63,7 +63,7 @@ abstract class AbstractQuery {
 		return $this;
 	}
 
-	public function whereId(Comparator $comparator, mixed $value): self {
+	public function whereId(mixed $value, Comparator $comparator = Comparator::EQ): self {
 		$idField = $this->tableMetadata->getIdColumnName();
 		return $this->where($idField, $comparator, $value);
 	}
