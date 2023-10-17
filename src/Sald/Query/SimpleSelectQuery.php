@@ -23,18 +23,23 @@ class SimpleSelectQuery extends AbstractQuery {
 		$this->setDirty();
 		return $this;
 	}
-
-	public function distinct(array|string $field = []): self {
+	
+	public function distinct(array|string $fieldOrFields = []): self {
 		$this->distinct = true;
-		$this->distinctFields = is_array($field) ? $field : [ $field ];
+		if (is_array($fieldOrFields)) {
+			$this->distinctFields = array_merge($this->distinctFields, $fieldOrFields);
+		} else {
+			$this->distinctFields[] = $fieldOrFields;
+		}
+		$this->setDirty();
 		return $this;
 	}
 	
-	public function fields(array|string $field): self {
-		if (is_array($field)) {
-			$this->selectFields = array_merge($this->selectFields, $field);
+	public function fields(array|string $fieldOrFields): self {
+		if (is_array($fieldOrFields)) {
+			$this->selectFields = array_merge($this->selectFields, $fieldOrFields);
 		} else {
-			$this->selectFields[] = $field;
+			$this->selectFields[] = $fieldOrFields;
 		}
 		$this->setDirty();
 		return $this;
