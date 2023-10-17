@@ -8,6 +8,9 @@ class SimpleSelectQuery extends AbstractQuery {
 
 	private ?string $alias = null;
 	private array $selectFields = [];
+
+	private bool $distinct = false;
+	private array $distinctFields = [];
 	private array $join = [];
 	private array $orderBy = [];
 	private array $groupBy = [];
@@ -18,6 +21,12 @@ class SimpleSelectQuery extends AbstractQuery {
 	public function alias(string $alias): self {
 		$this->alias = $alias;
 		$this->setDirty();
+		return $this;
+	}
+
+	public function distinct(array|string $field = []): self {
+		$this->distinct = true;
+		$this->distinctFields = is_array($field) ? $field : [ $field ];
 		return $this;
 	}
 	
@@ -67,11 +76,24 @@ class SimpleSelectQuery extends AbstractQuery {
 	private function buildOrderByClause(string $orderBy, string $direction, bool $caseSensitive): string {
 		return sprintf('%s%s %s', $orderBy, $caseSensitive ?  '' : '', $direction); // @TODO Case sensitive
 	}
+
+	private function getDistinctClause(): string {
+		$result = '';
+		if ($this->distinct) {
+			$result .= 'DISTINCT';
+			if (!empty($this->distinctFields)) {
+				$result .= sprintf(' ON (%s)', join(', ', $this->distinctFields));
+			}
+		}
+		return $result;
+	}
 	
 	protected function buildQuery(): string {
-		return sprintf(
-			'SELECT %s FROM %s %s %s %s %s %s %s %s',
+		return join(' ', [
+			'SELECT',
+			$this->getDistinctClause(),
 			empty($this->selectFields) ? '*' : join(', ', $this->selectFields),
+			'FROM',
 			$this->from,
 			$this->alias ?? '',
 			join(' ', $this->join),
@@ -79,8 +101,8 @@ class SimpleSelectQuery extends AbstractQuery {
 			empty($this->groupBy) ? '' : 'GROUP BY ' . join(', ', $this->groupBy),
 			empty($this->orderBy) ? '' : 'ORDER BY ' . join(', ', $this->orderBy),
 			$this->limit === -1   ? '' : 'LIMIT ' . $this->limit,
-			$this->offset === -1  ? '' : 'OFFSET ' . $this->offset,
-		);
+			$this->offset === -1  ? '' : 'OFFSET ' . $this->offset
+		]);
 	}
 
 	public function fetchAll(): array {
