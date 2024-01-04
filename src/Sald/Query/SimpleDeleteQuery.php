@@ -12,17 +12,12 @@ class SimpleDeleteQuery extends AbstractQuery {
 	}
 
 	protected function buildQuery(): string {
-		$q = 'DELETE FROM ' . $this->from;
-	
 		if (empty($this->where)) {
 			throw new \RuntimeException('Attempting to perform an unqualified DELETE. Aborted.');
 		}
 		else {
-			$q .= ' WHERE ';
-			$q .= join(' AND ', $this->where);
+			return sprintf('DELETE FROM %s %s', $this->from, $this->getWhereClause());
 		}
-		
-		return $q;
 	}
 
 }
