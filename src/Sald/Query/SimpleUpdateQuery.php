@@ -27,7 +27,7 @@ class SimpleUpdateQuery extends AbstractQuery {
 			'UPDATE',
 			$this->from,
 			'SET',
-			join(' ', $updateFields),
+			join(', ', $updateFields),
 			$this->getWhereClause()
 		]);
 	}
