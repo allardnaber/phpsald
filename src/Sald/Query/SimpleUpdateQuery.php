@@ -13,26 +13,23 @@ class SimpleUpdateQuery extends AbstractQuery {
 	}
 
 	protected function buildQuery(): string {
-		$parts = [];
+		$updateFields = [];
 		foreach ($this->updateKeys as $key) {
-			$fkey = 'update_' . $key;
-			if ($this->parameters[$fkey] instanceof Expression) {
-				$parts[] = sprintf('%s=(%s)', $key, $this->parameters[$fkey]->getExpression());
+			$parameter = 'update_' . $key;
+			if ($this->parameters[$parameter] instanceof Expression) {
+				$updateFields[] = sprintf('%s=(%s)', $key, $this->parameters[$parameter]->getExpression());
 			} else {
-				$parts[] = sprintf('%s=:%s', $key, $fkey);
+				$updateFields[] = sprintf('%s=:%s', $key, $parameter);
 			}
 		}
-		$q = sprintf('UPDATE %s SET %s',
+
+		return join(' ', [
+			'UPDATE',
 			$this->from,
-			join(', ', $parts)
-		);
-	
-		if (!empty($this->where)) {
-			$q .= ' WHERE ';
-			$q .= join(' AND ', $this->where);
-		}
-		
-		return $q;
+			'SET',
+			join(' ', $updateFields),
+			$this->getWhereClause()
+		]);
 	}
 
 	public function execute(): bool {
