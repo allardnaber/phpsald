@@ -88,8 +88,10 @@ abstract class AbstractQuery {
 
 	protected function bindValues(PDOStatement $statement): void {
 		foreach ($this->parameters as $key => $value) {
-			if (!($value instanceof Expression)) {
-				$statement->bindValue($key, $value);//, \PDO::PARAM_STR);
+			if (is_bool($value)) {
+				$statement->bindValue($key, $value, \PDO::PARAM_BOOL);
+			} else if (!($value instanceof Expression)) {
+				$statement->bindValue($key, $value);
 			}
 		}
 	}
