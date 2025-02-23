@@ -3,10 +3,7 @@ PHP Simple Abstraction Layer for Databases
 
 **Warning:** VERY MUCH Work-in-progress
 
-## Basic usage with entities
-The goal of this abstraction layer is to take away (some of) the boilerplate for
-interacting with several types of databases and result sets.
-
+## Connect to a database
 Set up a connection once
 ```php
 use Sald\Sald;
@@ -20,44 +17,39 @@ $connection = Sald::get($config);
 
 When using a single connection, throughout your application getting a connection can
 be retrieved using:
+
 ```php
 $connection = Sald::get();
-```
-or get a basic database query immediately, which can be used to filter records, etc:
-```php
-// The following will translate into:
-// SELECT * FROM <table-matching-classname>
-$query = Sald::select($classname);
 ```
 
 The library will make sure the connection always gets reused during the lifetime of
 the application.
+
+## Basic usage with entities
+The goal of this abstraction layer is to take away (some of) the boilerplate for
+interacting with several types of databases and result sets.
 
 Define database entities using Attributes. Additional table columns will be available
 as members, but can be defined using PHPDoc style comments, if your IDE supports them.
 
 ```php
 #[Table('my_table')]
-/**
- * @property int $id;
- * @property string $name;
- * @property int $age; 
- */
-class My_Entity extends Entity {
+class MyEntity extends Entity {
     
-    #[IdColumn]
-    protected int $id;
+    #[Id(Id:AUTO_INCREMENT)]
+    public int $id;
     
-    protected string $name;
-    protected int $age;
+    public string $name;
+    public int $age;
 }
 ```
 
 Then retrieve your entities from the database:
+
 ```php
 // fetch
-$entities = Sald::select(My_Entity::class)
-    ->where('age > 13')
+$entities = MyEntity::select()
+    ->where('age', 18)
     ->fetchAll();
 
 // do something
@@ -71,8 +63,8 @@ foreach ($entities as $entity) {
 
 Update an entity as follows:
 ```php
-$entity = Sald::select(My_Entity::class)
-    ->where('id = 3')
+$entity = MyEntity::select()
+    ->whereId(3)
     ->fetchSingle();
 
 $entity->name = 'Dummy';
@@ -81,8 +73,8 @@ $entity->update();
 
 Or delete another entity:
 ```php
-$entity = Sald::select(My_Entity::class)
-    ->where('id = 4')
+$entity = MyEntity::select()
+    ->whereId(4)
     ->fetchSingle();
 
 $entity->delete();
@@ -90,7 +82,7 @@ $entity->delete();
 
 Create new entities:
 ```php
-$entity = new My_Entity();
+$entity = new MyEntity();
 $entity->age = 37;
 $entity->name = 'A new dummy';
  // performs insert on default connection
@@ -100,9 +92,12 @@ $entity->insert();
 printf("Entity was created with id %d.\n", $entity->id);
 ```
 
+
 ## Advanced usage
-Use the following methods to create extensible queries:
+Use the following methods to create extensible queries, where `$classname` must
+refer to a class extending `Entity`.
 ```php
+$selectQuery = Sald::select($classname);
 $insertQuery = Sald::insert($classname);
 $updateQuery = Sald::update($classname);
 $deleteQuery = Sald::delete($classname);
@@ -113,5 +108,5 @@ like updating or deleting a range of records.
 
 ## Expert usage
 The `Connection` class is an extension of the native [`PDO`](https://www.php.net/manual/en/book.pdo.php) class, so custom queries
-can be used. Use the `fetchAll` or `fetchSingle` methods to convert the result set
-into entities.
+can be used. Use the `fetchAll`, `fetchFirst` or `fetchSingle` methods to convert the result
+set into entities.
