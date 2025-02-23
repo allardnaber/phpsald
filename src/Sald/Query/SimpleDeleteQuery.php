@@ -15,9 +15,7 @@ class SimpleDeleteQuery extends AbstractQuery {
 		if (empty($this->where)) {
 			throw new \RuntimeException('Attempting to perform an unqualified DELETE. Aborted.');
 		}
-		else {
-			return sprintf('DELETE FROM %s %s', $this->from, $this->getWhereClause());
-		}
+		return sprintf('DELETE FROM %s %s', $this->from, $this->getWhereClause());
 	}
 
 }

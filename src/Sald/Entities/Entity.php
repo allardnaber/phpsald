@@ -8,11 +8,10 @@ use Sald\Connection\Configuration;
 use Sald\Connection\Connection;
 use Sald\Connection\ConnectionManager;
 use Sald\Metadata\MetadataManager;
-use Sald\Metadata\TableMetadata;
 use Sald\Query\Expression\Expression;
 use Sald\Query\SimpleSelectQuery;
 
-class Entity {
+class Entity implements \JsonSerializable {
 
 	/**
 	 * The connection which generated this entity. If multiple connections are used, the same connection will be used
@@ -35,7 +34,7 @@ class Entity {
 	private array $dirty = [];
 
 	/**
-	 * Cached empty instance, to efficiently create a new object.
+	 * Cached empty instances, to efficiently create new objects.
 	 * @var Entity[]
 	 */
 	private static array $newInstanceTemplates = [];
@@ -83,6 +82,7 @@ class Entity {
 		if (!isset($this->fields[$name]) || $this->fields[$name] !== $value) {
 			$this->fields[$name] = $value;
 			$this->dirty[] = $name;
+			//@todo : editable id fields: old value is required for where clause.
 		}
 	}
 
@@ -98,10 +98,6 @@ class Entity {
 	public function __get(string $name): mixed {
 		$value = $this->fields[$name] ?? null;
 		return $value instanceof Expression ? 'expr:{' . $value->getSQL() . '}' : $value;
-	}
-
-	public function __getAllFields(): array {
-		return $this->fields;
 	}
 
 	/**
@@ -140,7 +136,6 @@ class Entity {
 			foreach ($metadata->getIdColumns() as $idColumn) {
 				if ($metadata->getColumn($idColumn)->isAutoIncrement()) {
 					$this->fields[$idColumn] = $this->connection->lastInsertId();
-					// @todo how to handle multi column insertions?
 				}
 			}
 			$this->resetDirtyState();
@@ -185,5 +180,9 @@ class Entity {
 		} elseif ($this->connection === null) {
 			$this->connection = ConnectionManager::get();
 		}
+	}
+
+	public function jsonSerialize(): array {
+		return $this->fields;
 	}
 }

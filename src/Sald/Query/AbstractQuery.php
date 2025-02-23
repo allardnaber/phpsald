@@ -52,7 +52,7 @@ abstract class AbstractQuery {
 
 	public function where(string $field, mixed $value, Comparator $comparator = Comparator::EQ): self {
 		$this->setDirty();
-		$columnName = $this->tableMetadata->getColumn($field)->getColumnName();
+		$columnName = $this->tableMetadata->getColumn($field)?->getColumnName() ?? $field;
 
 		if ($value instanceof Expression) {
 			$insertVal = $value->getSQL();

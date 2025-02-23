@@ -20,10 +20,6 @@ class MetadataManager {
 		return self::$metadata[$className];
 	}
 
-	public static function getAllMetadataForDebug(): array {
-		return self::$metadata;
-	}
-
 	private static function fetchTableMetadata(string $className): TableMetadata {
 		try {
 			$reflection = new ReflectionClass($className);
@@ -88,7 +84,7 @@ class MetadataManager {
 		}
 		$columnAttribute = self::getFirstReflectionAttribute($reflection, Column::class);
 		if ($columnAttribute instanceof Column) {
-			$result->setColumnNameOverride($columnAttribute->getColumnName());
+			$result->applyColumnAttribute($columnAttribute);
 		}
 		return $result;
 	}

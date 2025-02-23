@@ -2,6 +2,7 @@
 
 namespace Sald\Metadata;
 
+use Sald\Attributes\Column;
 use Sald\Attributes\Id;
 
 class ColumnMetadata {
@@ -12,8 +13,8 @@ class ColumnMetadata {
 
 	public function __construct(private string $propertyName, private string $type) {}
 
-	public function setColumnNameOverride(string $override = null): void {
-		$this->columnNameOverride = $override;
+	public function applyColumnAttribute(Column $attribute): void {
+		$this->columnNameOverride = $attribute->getColumnName();
 	}
 
 	public function applyIdAttribute(Id $attribute): void {
