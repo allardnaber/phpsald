@@ -112,7 +112,7 @@ class Connection extends PDO {
 	}
 
 	private function asEntity(array $record, string $classname): Entity {
-		return new $classname($this, $record);
+		return $classname::newInstance($this, $record);
 	}
 
 }

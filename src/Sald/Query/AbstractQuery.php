@@ -2,8 +2,10 @@
 
 namespace Sald\Query;
 
+use Couchbase\InvalidConfigurationException;
 use PDOStatement;
 use Sald\Connection\Connection;
+use Sald\Exception\IncompleteDataException;
 use Sald\Metadata\TableMetadata;
 use Sald\Query\Expression\Comparator;
 use Sald\Query\Expression\Condition;
@@ -29,7 +31,7 @@ abstract class AbstractQuery {
 	public function __construct(Connection $connection, TableMetadata $metadata) {
 		$this->connection = $connection;
 		$this->tableMetadata = $metadata;
-		$this->classname = $metadata->getClassname();
+		$this->classname = $metadata->getClassName();
 		$this->from = $metadata->getTableName();
 	}
 
@@ -64,8 +66,22 @@ abstract class AbstractQuery {
 	}
 
 	public function whereId(mixed $value, Comparator $comparator = Comparator::EQ): self {
-		$idField = $this->tableMetadata->getIdColumnName();
-		return $this->where($idField, $value, $comparator);
+		$idFields = $this->tableMetadata->getIdColumns();
+		if (count($idFields) > 1 && !is_array($value)) {
+			throw new IncompleteDataException(sprintf('%d id fields are required, use an array argument to provide the full id.', count($idFields)));
+		}
+		if (!is_array($value)) {
+			$idField = array_keys($idFields)[0];
+			return $this->where($idField, $value, $comparator);
+		} else {
+			foreach ($idFields as $key => $type) {
+				if (!isset($value[$key])) {
+					throw new IncompleteDataException('Id field should contain a value for %s.', $key);
+				}
+				$this->where($key, $value[$key], $comparator);
+			}
+			return $this;
+		}
 	}
 
 	protected function getWhereClause(): string {

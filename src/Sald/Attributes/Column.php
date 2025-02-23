@@ -6,5 +6,9 @@ use PDO;
 
 #[\Attribute(\Attribute::TARGET_PROPERTY)]
 class Column {
-	public function __construct(int $type = PDO::PARAM_INT, string $name = null) {}
+	public function __construct(private string $name) {}
+
+	public function getColumnName(): string {
+		return $this->name;
+	}
 }

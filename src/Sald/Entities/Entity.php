@@ -2,10 +2,13 @@
 
 namespace Sald\Entities;
 
+use ReflectionClass;
+use ReflectionProperty;
 use Sald\Connection\Configuration;
 use Sald\Connection\Connection;
 use Sald\Connection\ConnectionManager;
 use Sald\Metadata\MetadataManager;
+use Sald\Metadata\TableMetadata;
 use Sald\Query\Expression\Expression;
 use Sald\Query\SimpleSelectQuery;
 
@@ -25,28 +28,57 @@ class Entity {
 	 */
 	private array $fields = [];
 
-
-
-	private string $idColumn;
-
 	/**
 	 * Keep track of updated fields.
 	 * @var string[] Names of the fields that were changed.
 	 */
 	private array $dirty = [];
 
+	/**
+	 * Cached empty instance, to efficiently create a new object.
+	 * @var Entity[]
+	 */
+	private static array $newInstanceTemplates = [];
+
+
 	public function __construct(?Connection $connection = null, array $fields = []) {
-		$this->connection = $connection;
-		foreach ($fields as $key => $value) {
-			$this->fields[$key] = $value;
+		$reflection = new ReflectionClass(static::class);
+		foreach ($reflection->getProperties(ReflectionProperty::IS_PUBLIC) as $prop) {
+			unset($this->{$prop->getName()});
 		}
-		$this->idColumn = MetadataManager::getTable(static::class)->getIdColumnName();
+		$this->connection = $connection;
+		$this->setFieldValues($fields);
+	}
+
+	public static function newInstance(?Connection $connection = null, array $fields = []): static {
+		if (!isset(self::$newInstanceTemplates[static::class])) {
+			self::$newInstanceTemplates[static::class] = new static();
+		}
+		$instance = clone self::$newInstanceTemplates[static::class];
+		$instance->connection = $connection;
+		$instance->setFieldValues($fields);
+		return $instance;
+	}
+
+	private function setFieldValues(array $fields): void {
+		$columns = MetadataManager::getTable(static::class)?->getColumns() ?? [];
+		foreach ($columns as $column) {
+			if (isset($fields[$column->getColumnName()])) {
+				$this->fields[$column->getPropertyName()] = $fields[$column->getColumnName()];
+				//unset ($fields[$column->getColumnName()]);
+			}
+		}
+
+		// @todo remaining fields?
+		/*foreach ($fields as $key => $value) {
+			$this->fields[$key] = $value;
+		}*/
 	}
 
 	public function __set(string $name, mixed $value): void {
-		if ($name === $this->idColumn) {
+		if (!MetadataManager::getTable(static::class)->getColumn($name)->isEditable()) {
 			throw new \RuntimeException(
-				sprintf('Property %s is the id field of %s, and thus readonly.', $name, static::class));
+				sprintf('Property %s is an auto-increment id of %s, and thus readonly.', $name, static::class));
 		}
 		if (!isset($this->fields[$name]) || $this->fields[$name] !== $value) {
 			$this->fields[$name] = $value;
@@ -55,17 +87,12 @@ class Entity {
 	}
 
 	public function expression(string $name, Expression $expression): void {
-		$this->fields[$name] = $expression;
-		$this->dirty[] = $name;
+		$this->__set($name, $expression);
 	}
 
 	public function getExpression(string $name): ?Expression {
 		$value = $this->fields[$name] ?? null;
 		return $value instanceof Expression ? $value : null;
-	}
-
-	public function getId(): mixed {
-		return $this->fields[$this->idColumn] ?? null;
 	}
 
 	public function __get(string $name): mixed {
@@ -108,9 +135,14 @@ class Entity {
 	public function insert(?Configuration $config = null): bool {
 		$this->registerConnectionIfRequired($config);
 		$query = $this->connection->insertEntity($this);
+		$metadata = MetadataManager::getTable(static::class);
 		if (($result = $query->execute()) === true) {
-			$idColumn = MetadataManager::getTable(static::class)->getIdColumnName();
-			$this->fields[$idColumn] = $this->connection->lastInsertId();
+			foreach ($metadata->getIdColumns() as $idColumn) {
+				if ($metadata->getColumn($idColumn)->isAutoIncrement()) {
+					$this->fields[$idColumn] = $this->connection->lastInsertId();
+					// @todo how to handle multi column insertions?
+				}
+			}
 			$this->resetDirtyState();
 		}
 		return $result;
@@ -124,9 +156,13 @@ class Entity {
 	public function delete(?Configuration $config = null): bool {
 		$this->registerConnectionIfRequired($config);
 		$query = $this->connection->deleteEntity($this);
+		$metadata = MetadataManager::getTable(static::class);
 		if (($result = $query->execute()) === true) {
-			$idColumn = MetadataManager::getTable(static::class)->getIdColumnName();
-			unset($this->fields[$idColumn]);
+			foreach ($metadata->getIdColumns() as $idColumn) {
+				if ($metadata->getColumn($idColumn)->isAutoIncrement()) {
+					unset($this->fields[$idColumn]);
+				}
+			}
 			$this->resetDirtyState();
 		}
 		return $result;
