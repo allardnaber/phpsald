@@ -78,7 +78,7 @@ class Entity {
 	public function __set(string $name, mixed $value): void {
 		if (!MetadataManager::getTable(static::class)->getColumn($name)->isEditable()) {
 			throw new \RuntimeException(
-				sprintf('Property %s is an auto-increment id of %s, and thus readonly.', $name, static::class));
+				sprintf('Property %s of %s is not editable.', $name, static::class));
 		}
 		if (!isset($this->fields[$name]) || $this->fields[$name] !== $value) {
 			$this->fields[$name] = $value;

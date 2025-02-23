@@ -2,7 +2,6 @@
 
 namespace Sald\Query;
 
-use Couchbase\InvalidConfigurationException;
 use PDOStatement;
 use Sald\Connection\Connection;
 use Sald\Exception\IncompleteDataException;
@@ -53,15 +52,16 @@ abstract class AbstractQuery {
 
 	public function where(string $field, mixed $value, Comparator $comparator = Comparator::EQ): self {
 		$this->setDirty();
+		$columnName = $this->tableMetadata->getColumn($field)->getColumnName();
 
 		if ($value instanceof Expression) {
 			$insertVal = $value->getSQL();
 		} else {
-			$insertVal = $value === null ? null : ':__where_' . $field;
-			$this->parameter('__where_' . $field, $value);
+			$insertVal = $value === null ? null : ':__where_' . $columnName;
+			$this->parameter('__where_' . $columnName, $value);
 		}
 
-		$this->where[] = new Condition($field, $comparator, $insertVal);
+		$this->where[] = new Condition($columnName, $comparator, $insertVal);
 		return $this;
 	}
 
@@ -71,10 +71,9 @@ abstract class AbstractQuery {
 			throw new IncompleteDataException(sprintf('%d id fields are required, use an array argument to provide the full id.', count($idFields)));
 		}
 		if (!is_array($value)) {
-			$idField = array_keys($idFields)[0];
-			return $this->where($idField, $value, $comparator);
+			return $this->where($idFields[0], $value, $comparator);
 		} else {
-			foreach ($idFields as $key => $type) {
+			foreach ($idFields as $key) {
 				if (!isset($value[$key])) {
 					throw new IncompleteDataException('Id field should contain a value for %s.', $key);
 				}

@@ -62,11 +62,7 @@ class Connection extends PDO {
 	 * @return Entity[] The entities that were returned by the query.
 	 */
 	public function fetchAll(PDOStatement $statement, string $classname): array {
-		$result = [];
-		foreach ($statement->fetchAll() as $record) {
-			$result[] = $this->asEntity($record, $classname);
-		}
-		return $result;
+		return array_map(fn(array $record) => $this->asEntity($record, $classname), $statement->fetchAll());
 	}
 
 	/**

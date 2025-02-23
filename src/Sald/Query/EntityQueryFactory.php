@@ -46,7 +46,7 @@ class EntityQueryFactory {
 
 	private static function addIdWhereToQuery(TableMetadata $metadata, Entity $entity, AbstractQuery $query): void {
 		$idKey = [];
-		foreach ($metadata->getIdColumns() as $key => $type) {
+		foreach ($metadata->getIdColumns() as $key) {
 			$colName = $metadata->getColumn($key)->getColumnName();
 			$idKey[$colName] = $entity->$key;
 		}

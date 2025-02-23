@@ -140,7 +140,7 @@ class SimpleSelectQuery extends AbstractQuery {
 		if ($stmt->execute()) {
 			return $stmt;
 		} else {
-			// @TODO in which cases does this happen?
+			// @TODO error handling up next
 			throw new \RuntimeException('An error occurred');
 		}
 	}
