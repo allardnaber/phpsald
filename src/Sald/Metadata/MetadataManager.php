@@ -12,6 +12,8 @@ use Sald\Exception\ClassNotFoundException;
 class MetadataManager {
 
 	private static array $metadata = [];
+	// @todo: make configuration option
+	private const CONVERT_TO_SNAKE_CASE = true;
 
 	public static function getTable(string $className): TableMetadata {
 		if (!isset(self::$metadata[$className])) {
@@ -23,13 +25,16 @@ class MetadataManager {
 	private static function fetchTableMetadata(string $className): TableMetadata {
 		try {
 			$reflection = new ReflectionClass($className);
-			$tableName = $reflection->getShortName();
+			$result = new TableMetadata($className);
+
 			$tableDef = self::getFirstReflectionAttribute($reflection, Table::class);
 			if ($tableDef instanceof Table) {
-				$tableName = $tableDef->getName();
+				$result->setNameOverride($tableDef->getName());
+			} else {
+				$name = $reflection->getShortName();
+				$result->setNameOverride(self::CONVERT_TO_SNAKE_CASE ? Converter::toSnakeCase($name) : $name);
 			}
 
-			$result = new TableMetadata($className, $tableName);
 			$columns = self::discoverColumns($reflection);
 			$result->setColumns($columns);
 			$result->setIdColumns(self::findIdColumns($columns));
@@ -58,7 +63,7 @@ class MetadataManager {
 		$result = [];
 		foreach ($columns as $column) {
 			if ($column->isIdColumn()) {
-				$result[] = $column->getPropertyName();
+				$result[] = $column->getRealObjectName();
 			}
 		}
 		return $result;
@@ -85,6 +90,8 @@ class MetadataManager {
 		$columnAttribute = self::getFirstReflectionAttribute($reflection, Column::class);
 		if ($columnAttribute instanceof Column) {
 			$result->applyColumnAttribute($columnAttribute);
+		} elseif (self::CONVERT_TO_SNAKE_CASE) {
+			$result->setNameOverride(Converter::toSnakeCase($reflection->getName()));
 		}
 		return $result;
 	}

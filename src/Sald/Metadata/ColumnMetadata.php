@@ -5,16 +5,18 @@ namespace Sald\Metadata;
 use Sald\Attributes\Column;
 use Sald\Attributes\Id;
 
-class ColumnMetadata {
+class ColumnMetadata extends AbstractMetadata {
 
 	private bool $isIdColumn = false;
 	private ?Id $idAttribute = null;
-	private ?string $columnNameOverride = null;
 
-	public function __construct(private string $propertyName, private string $type) {}
+	public function __construct(string $objectName, private string $type) {
+		parent::__construct($objectName);
+	}
 
 	public function applyColumnAttribute(Column $attribute): void {
-		$this->columnNameOverride = $attribute->getColumnName();
+		$this->setNameOverride($attribute->getColumnName());
+		// @todo include custom column types (json, date, etc)
 	}
 
 	public function applyIdAttribute(Id $attribute): void {
@@ -24,14 +26,6 @@ class ColumnMetadata {
 
 	public function isAutoIncrement(): bool {
 		return $this->idAttribute?->hasFlag(Id::AUTO_INCREMENT) ?? false;
-	}
-
-	public function getColumnName(): string {
-		return $this->columnNameOverride ?? $this->propertyName;
-	}
-
-	public function getPropertyName(): string {
-		return $this->propertyName;
 	}
 
 	public function getType(): string {

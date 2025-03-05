@@ -39,7 +39,7 @@ class EntityQueryFactory {
 
 		foreach ($dbFields as $field) {
 			$expr = $entity->getExpression($field);
-			$baseQuery->set($columns[$field]?->getColumnName() ?? $field, $expr ?? $entity->$field);
+			$baseQuery->set($columns[$field]?->getDbObjectName() ?? $field, $expr ?? $entity->$field);
 		}
 		return $baseQuery;
 	}
@@ -47,7 +47,7 @@ class EntityQueryFactory {
 	private static function addIdWhereToQuery(TableMetadata $metadata, Entity $entity, AbstractQuery $query): void {
 		$idKey = [];
 		foreach ($metadata->getIdColumns() as $key) {
-			$colName = $metadata->getColumn($key)->getColumnName();
+			$colName = $metadata->getColumn($key)->getDbObjectName();
 			$idKey[$colName] = $entity->$key;
 		}
 		$query->whereId($idKey);

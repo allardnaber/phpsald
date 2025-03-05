@@ -62,8 +62,8 @@ class Entity implements \JsonSerializable {
 	private function setFieldValues(array $fields): void {
 		$columns = MetadataManager::getTable(static::class)?->getColumns() ?? [];
 		foreach ($columns as $column) {
-			if (isset($fields[$column->getColumnName()])) {
-				$this->fields[$column->getPropertyName()] = $fields[$column->getColumnName()];
+			if (isset($fields[$column->getDbObjectName()])) {
+				$this->fields[$column->getRealObjectName()] = $fields[$column->getDbObjectName()];
 				//unset ($fields[$column->getColumnName()]);
 			}
 		}

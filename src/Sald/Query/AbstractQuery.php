@@ -30,8 +30,8 @@ abstract class AbstractQuery {
 	public function __construct(Connection $connection, TableMetadata $metadata) {
 		$this->connection = $connection;
 		$this->tableMetadata = $metadata;
-		$this->classname = $metadata->getClassName();
-		$this->from = $metadata->getTableName();
+		$this->classname = $metadata->getRealObjectName();
+		$this->from = $metadata->getDbObjectName();
 	}
 
 	abstract protected function buildQuery(): string;
@@ -52,7 +52,7 @@ abstract class AbstractQuery {
 
 	public function where(string $field, mixed $value, Comparator $comparator = Comparator::EQ): self {
 		$this->setDirty();
-		$columnName = $this->tableMetadata->getColumn($field)?->getColumnName() ?? $field;
+		$columnName = $this->tableMetadata->getColumn($field)?->getDbObjectName() ?? $field;
 
 		if ($value instanceof Expression) {
 			$insertVal = $value->getSQL();

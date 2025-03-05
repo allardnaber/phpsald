@@ -2,7 +2,7 @@
 
 namespace Sald\Metadata;
 
-class TableMetadata {
+class TableMetadata extends AbstractMetadata {
 
 	/**
 	 * @var string[]
@@ -13,11 +13,6 @@ class TableMetadata {
 	 * @var ColumnMetadata[]
 	 */
 	private array $columns = [];
-
-	public function __construct(private string $className, private string $tableName) {}
-
-	public function getClassName(): string { return $this->className; }
-	public function getTableName(): string { return $this->tableName; }
 
 	/**
 	 * @return string[]
