@@ -26,6 +26,6 @@ class SimpleInsertQuery extends AbstractQuery {
 		$stmt = $this->connection->prepare($this->getSQL());
 		$this->bindValues($stmt);
 
-		return $stmt->execute();
+		return $this->connection->execute($stmt);
 	}
 }

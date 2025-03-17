@@ -5,6 +5,8 @@ namespace Sald\Connection;
 use PDO;
 use PDOStatement;
 use Sald\Entities\Entity;
+use Sald\Exception\Converter\DbErrorHandler;
+use Sald\Exception\Db\DbException;
 use Sald\Exception\RecordNotFoundException;
 use Sald\Metadata\MetadataManager;
 use Sald\Metadata\TableMetadata;
@@ -62,7 +64,12 @@ class Connection extends PDO {
 	 * @return Entity[] The entities that were returned by the query.
 	 */
 	public function fetchAll(PDOStatement $statement, string $classname): array {
-		return array_map(fn(array $record) => $this->asEntity($record, $classname), $statement->fetchAll());
+		try {
+			return array_map(fn(array $record) => $this->asEntity($record, $classname), $statement->fetchAll());
+		}
+		catch (\PDOException $e) {
+			throw DbErrorHandler::getDbExceptionWithConnection($e, $this);
+		}
 	}
 
 	/**
@@ -86,6 +93,14 @@ class Connection extends PDO {
 		return $this->fetchOneRecord($statement, $classname, false);
 	}
 
+	public function execute(PDOStatement $statement, ?array $params = null): bool {
+		try {
+			return $statement->execute($params);
+		} catch (\PDOException $e) {
+			throw DbErrorHandler::getDbExceptionWithConnection($e, $this);
+		}
+	}
+
 	/**
 	 * @param PDOStatement $statement
 	 * @param string $classname
@@ -94,7 +109,12 @@ class Connection extends PDO {
 	 * @throws RecordNotFoundException If no record was found and strict mode is on.
 	 */
 	private function fetchOneRecord(PDOStatement $statement, string $classname, bool $strict): ?Entity {
-		$result = $statement->fetch();
+		try {
+			$result = $statement->fetch();
+		} catch (\PDOException $e) {
+			throw DbErrorHandler::getDbExceptionWithConnection($e, $this);
+		}
+
 		if ($result === false) {
 			if ($strict) {
 				throw new RecordNotFoundException(
@@ -108,6 +128,7 @@ class Connection extends PDO {
 	}
 
 	private function asEntity(array $record, string $classname): Entity {
+		/* @see Entity::newInstance() */
 		return $classname::newInstance($this, $record);
 	}
 
