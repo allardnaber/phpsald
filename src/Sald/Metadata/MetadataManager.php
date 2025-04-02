@@ -7,6 +7,7 @@ use ReflectionProperty;
 use Sald\Attributes\Column;
 use Sald\Attributes\Id;
 use Sald\Attributes\Table;
+use Sald\Attributes\Transient;
 use Sald\Exception\ClassNotFoundException;
 
 class MetadataManager {
@@ -76,7 +77,9 @@ class MetadataManager {
 	private static function discoverColumns(ReflectionClass $reflection): array {
 		$result = [];
 		foreach ($reflection->getProperties() as $property) {
-			$result[$property->getName()] = self::getColumn($property);
+			if (empty($property->getAttributes(Transient::class))) {
+				$result[$property->getName()] = self::getColumn($property);
+			}
 		}
 		return $result;
 	}

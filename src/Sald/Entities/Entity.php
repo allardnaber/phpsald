@@ -4,6 +4,7 @@ namespace Sald\Entities;
 
 use ReflectionClass;
 use ReflectionProperty;
+use Sald\Attributes\JsonExclude;
 use Sald\Connection\Configuration;
 use Sald\Connection\Connection;
 use Sald\Connection\ConnectionManager;
@@ -39,8 +40,16 @@ class Entity implements \JsonSerializable {
 	 */
 	private static array $newInstanceTemplates = [];
 
+	/**
+	 * Indexed by classname and field name, keys indicate which fields to include in JSON serialization.
+	 * i.e. $jsonSerializableFields[Entity][exampleField] = 1 indicates 'exampleField' should be included.
+	 * @var int[][]
+	 */
+	private static array $jsonSerializableFields = [];
 
 	public function __construct(?Connection $connection = null, array $fields = []) {
+		self::collectJsonSerializableFields();
+
 		$reflection = new ReflectionClass(static::class);
 		foreach ($reflection->getProperties(ReflectionProperty::IS_PUBLIC) as $prop) {
 			unset($this->{$prop->getName()});
@@ -75,7 +84,7 @@ class Entity implements \JsonSerializable {
 	}
 
 	public function __set(string $name, mixed $value): void {
-		if (!MetadataManager::getTable(static::class)->getColumn($name)->isEditable()) {
+		if (MetadataManager::getTable(static::class)->getColumn($name)?->isEditable() === false) {
 			throw new \RuntimeException(
 				sprintf('Property %s of %s is not editable.', $name, static::class));
 		}
@@ -87,7 +96,7 @@ class Entity implements \JsonSerializable {
 	}
 
 	public function expression(string $name, Expression $expression): void {
-		$this->__set($name, $expression);
+		$this->$name = $expression;
 	}
 
 	public function getExpression(string $name): ?Expression {
@@ -183,6 +192,28 @@ class Entity implements \JsonSerializable {
 	}
 
 	public function jsonSerialize(): array {
-		return $this->fields;
+		return array_filter(
+			$this->fields,
+			fn(string $fieldName) => isset(self::$jsonSerializableFields[static::class][$fieldName]),
+			ARRAY_FILTER_USE_KEY
+		);
 	}
+
+	private static function collectJsonSerializableFields(): void {
+		if (isset(self::$jsonSerializableFields[static::class])) return;
+
+		$reflection = new ReflectionClass(static::class);
+
+		$fieldNames = array_map(
+			fn(ReflectionProperty $property) => $property->getName(),
+			array_filter(
+				$reflection->getProperties(ReflectionProperty::IS_PUBLIC),
+				fn(ReflectionProperty $property) => empty($property->getAttributes(JsonExclude::class))
+			)
+		);
+
+		// use field names as indices for efficient lookup
+		self::$jsonSerializableFields[static::class] = array_flip($fieldNames);
+	}
+
 }
