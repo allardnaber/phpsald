@@ -2,6 +2,9 @@
 
 namespace Sald\Connection;
 
+use Sald\Exception\Converter\DbErrorHandler;
+use Sald\Exception\Db\Connection\DbConnectionException;
+
 class Configuration {
 
 	private string $dsn, $username, $password;
@@ -18,7 +21,16 @@ class Configuration {
 	}
 
 	public function createConnection(): Connection {
-		return new Connection($this->dsn, $this->username, $this->password, $this->options);
+		try {
+			return new Connection($this->dsn, $this->username, $this->password, $this->options);
+		} catch (\PDOException $e) {
+			$driverParts = explode(':', $this->dsn, 2);
+			if (count($driverParts) > 1) {
+				throw DbErrorHandler::getDbException($e, $driverParts[0]);
+			} else {
+				throw DbConnectionException::fromException($e);
+			}
+		}
 	}
 
 	public function getChecksum(): string {

@@ -12,34 +12,44 @@ use Sald\Metadata\TableMetadata;
 class EntityQueryFactory {
 
 	public static function insert(Connection $connection, TableMetadata $metadata, Entity $entity): SimpleInsertQuery {
-		$result = new SimpleInsertQuery($connection, $metadata);
-		$insertFields = array_intersect($entity->getDirtyFields(), $metadata->getEditableFields());
-
-		foreach ($insertFields as $field) {
-			$expr = $entity->getExpression($field);
-			$result->set($field, $expr ?? $entity->$field);
-		}
-		return $result;
+		return self::upsert(true, $connection, $metadata, $entity);
 	}
 
 	public static function update(Connection $connection, TableMetadata $metadata, Entity $entity): SimpleUpdateQuery {
-		$result = new SimpleUpdateQuery($connection, $metadata);
-		$idColumn = $metadata->getIdColumnName();
-		$result->whereId($entity->$idColumn);
-
-		$updateFields = array_intersect($entity->getDirtyFields(), $metadata->getEditableFields());
-
-		foreach ($updateFields as $field) {
-			$expr = $entity->getExpression($field);
-			$result->set($field, $expr ?? $entity->$field);
-		}
-		return $result;
+		return self::upsert(false, $connection, $metadata, $entity);
 	}
 
 	public static function delete(Connection $connection, TableMetadata $metadata, Entity $entity): SimpleDeleteQuery {
 		$result = new SimpleDeleteQuery($connection, $metadata);
-		$idColumn = $metadata->getIdColumnName();
-		$result->whereId($entity->$idColumn);
+		self::addIdWhereToQuery($metadata, $entity, $result);
 		return $result;
+	}
+
+	private static function upsert(bool $isInsert, Connection $connection, TableMetadata $metadata, Entity $entity):
+			SimpleInsertQuery|SimpleUpdateQuery {
+		if ($isInsert) {
+			$baseQuery = new SimpleInsertQuery($connection, $metadata);
+		} else {
+			$baseQuery = new SimpleUpdateQuery($connection, $metadata);
+			self::addIdWhereToQuery($metadata, $entity, $baseQuery);
+		}
+
+		$columns = $metadata->getColumns();
+		$dbFields = array_filter($entity->getDirtyFields(), fn(string $field) => $columns[$field]?->isEditable());
+
+		foreach ($dbFields as $field) {
+			$expr = $entity->getExpression($field);
+			$baseQuery->set($columns[$field]?->getDbObjectName() ?? $field, $expr ?? $entity->$field);
+		}
+		return $baseQuery;
+	}
+
+	private static function addIdWhereToQuery(TableMetadata $metadata, Entity $entity, AbstractQuery $query): void {
+		$idKey = [];
+		foreach ($metadata->getIdColumns() as $key) {
+			$colName = $metadata->getColumn($key)->getDbObjectName();
+			$idKey[$colName] = $entity->$key;
+		}
+		$query->whereId($idKey);
 	}
 }

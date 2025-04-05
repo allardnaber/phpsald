@@ -5,10 +5,10 @@ namespace Sald;
 use Sald\Connection\Configuration;
 use Sald\Connection\Connection;
 use Sald\Connection\ConnectionManager;
-use Sald\Entities\Entity;
 use Sald\Query\SimpleDeleteQuery;
 use Sald\Query\SimpleInsertQuery;
 use Sald\Query\SimpleSelectQuery;
+use Sald\Query\SimpleUpdateQuery;
 
 class Sald {
 
@@ -20,8 +20,12 @@ class Sald {
 		return self::get($config)->select($className);
 	}
 
-	public static function insert(Entity $entity, ?Configuration $config = null): SimpleInsertQuery {
-		return self::get($config)->insert($entity);
+	public static function insert(string $className, ?Configuration $config = null): SimpleInsertQuery {
+		return self::get($config)->insert($className);
+	}
+
+	public static function update(string $className, ?Configuration $config = null): SimpleUpdateQuery {
+		return self::get($config)->update($className);
 	}
 
 	public static function delete(string $className, ?Configuration $config = null): SimpleDeleteQuery {

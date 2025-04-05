@@ -4,6 +4,7 @@ namespace Sald\Query;
 
 use PDOStatement;
 use Sald\Connection\Connection;
+use Sald\Exception\IncompleteDataException;
 use Sald\Metadata\TableMetadata;
 use Sald\Query\Expression\Comparator;
 use Sald\Query\Expression\Condition;
@@ -29,8 +30,8 @@ abstract class AbstractQuery {
 	public function __construct(Connection $connection, TableMetadata $metadata) {
 		$this->connection = $connection;
 		$this->tableMetadata = $metadata;
-		$this->classname = $metadata->getClassname();
-		$this->from = $metadata->getTableName();
+		$this->classname = $metadata->getRealObjectName();
+		$this->from = $metadata->getDbObjectName();
 	}
 
 	abstract protected function buildQuery(): string;
@@ -51,21 +52,35 @@ abstract class AbstractQuery {
 
 	public function where(string $field, mixed $value, Comparator $comparator = Comparator::EQ): self {
 		$this->setDirty();
+		$columnName = $this->tableMetadata->getColumn($field)?->getDbObjectName() ?? $field;
 
 		if ($value instanceof Expression) {
 			$insertVal = $value->getSQL();
 		} else {
-			$insertVal = $value === null ? null : ':__where_' . $field;
-			$this->parameter('__where_' . $field, $value);
+			$insertVal = $value === null ? null : ':__where_' . $columnName;
+			$this->parameter('__where_' . $columnName, $value);
 		}
 
-		$this->where[] = new Condition($field, $comparator, $insertVal);
+		$this->where[] = new Condition($columnName, $comparator, $insertVal);
 		return $this;
 	}
 
 	public function whereId(mixed $value, Comparator $comparator = Comparator::EQ): self {
-		$idField = $this->tableMetadata->getIdColumnName();
-		return $this->where($idField, $value, $comparator);
+		$idFields = $this->tableMetadata->getIdColumns();
+		if (count($idFields) > 1 && !is_array($value)) {
+			throw new IncompleteDataException(sprintf('%d id fields are required, use an array argument to provide the full id.', count($idFields)));
+		}
+		if (!is_array($value)) {
+			return $this->where($idFields[0], $value, $comparator);
+		} else {
+			foreach ($idFields as $key) {
+				if (!isset($value[$key])) {
+					throw new IncompleteDataException('Id field should contain a value for %s.', $key);
+				}
+				$this->where($key, $value[$key], $comparator);
+			}
+			return $this;
+		}
 	}
 
 	protected function getWhereClause(): string {

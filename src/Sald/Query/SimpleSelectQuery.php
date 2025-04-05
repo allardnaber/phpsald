@@ -137,10 +137,10 @@ class SimpleSelectQuery extends AbstractQuery {
 	private function executeAndGetStatement(): \PDOStatement {
 		$stmt = $this->connection->prepare($this->getSQL());
 		$this->bindValues($stmt);
-		if ($stmt->execute()) {
+		if ($this->connection->execute($stmt)) {
 			return $stmt;
 		} else {
-			// @TODO in which cases does this happen?
+			// @TODO error handling up next
 			throw new \RuntimeException('An error occurred');
 		}
 	}

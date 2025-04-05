@@ -2,6 +2,9 @@
 
 namespace Sald\Entities;
 
+use ReflectionClass;
+use ReflectionProperty;
+use Sald\Attributes\JsonExclude;
 use Sald\Connection\Configuration;
 use Sald\Connection\Connection;
 use Sald\Connection\ConnectionManager;
@@ -9,7 +12,7 @@ use Sald\Metadata\MetadataManager;
 use Sald\Query\Expression\Expression;
 use Sald\Query\SimpleSelectQuery;
 
-class Entity {
+class Entity implements \JsonSerializable {
 
 	/**
 	 * The connection which generated this entity. If multiple connections are used, the same connection will be used
@@ -25,38 +28,75 @@ class Entity {
 	 */
 	private array $fields = [];
 
-
-
-	private string $idColumn;
-
 	/**
 	 * Keep track of updated fields.
 	 * @var string[] Names of the fields that were changed.
 	 */
 	private array $dirty = [];
 
+	/**
+	 * Cached empty instances, to efficiently create new objects.
+	 * @var Entity[]
+	 */
+	private static array $newInstanceTemplates = [];
+
+	/**
+	 * Indexed by classname and field name, keys indicate which fields to include in JSON serialization.
+	 * i.e. $jsonSerializableFields[Entity][exampleField] = 1 indicates 'exampleField' should be included.
+	 * @var int[][]
+	 */
+	private static array $jsonSerializableFields = [];
+
 	public function __construct(?Connection $connection = null, array $fields = []) {
-		$this->connection = $connection;
-		foreach ($fields as $key => $value) {
-			$this->fields[$key] = $value;
+		self::collectJsonSerializableFields();
+
+		$reflection = new ReflectionClass(static::class);
+		foreach ($reflection->getProperties(ReflectionProperty::IS_PUBLIC) as $prop) {
+			unset($this->{$prop->getName()});
 		}
-		$this->idColumn = MetadataManager::getTable(static::class)->getIdColumnName();
+		$this->connection = $connection;
+		$this->setFieldValues($fields);
+	}
+
+	public static function newInstance(?Connection $connection = null, array $fields = []): static {
+		if (!isset(self::$newInstanceTemplates[static::class])) {
+			self::$newInstanceTemplates[static::class] = new static();
+		}
+		$instance = clone self::$newInstanceTemplates[static::class];
+		$instance->connection = $connection;
+		$instance->setFieldValues($fields);
+		return $instance;
+	}
+
+	private function setFieldValues(array $fields): void {
+		$columns = MetadataManager::getTable(static::class)?->getColumns() ?? [];
+		foreach ($columns as $column) {
+			if (isset($fields[$column->getDbObjectName()])) {
+				$this->fields[$column->getRealObjectName()] = $fields[$column->getDbObjectName()];
+				//unset ($fields[$column->getColumnName()]);
+			}
+		}
+
+		// @todo remaining fields?
+		/*foreach ($fields as $key => $value) {
+			$this->fields[$key] = $value;
+		}*/
 	}
 
 	public function __set(string $name, mixed $value): void {
-		if ($name === $this->idColumn) {
+		if (MetadataManager::getTable(static::class)->getColumn($name)?->isEditable() === false) {
 			throw new \RuntimeException(
-				sprintf('Property %s is the id field of %s, and thus readonly.', $name, static::class));
+				sprintf('Property %s of %s is not editable.', $name, static::class));
 		}
 		if (!isset($this->fields[$name]) || $this->fields[$name] !== $value) {
 			$this->fields[$name] = $value;
 			$this->dirty[] = $name;
+			//@todo : editable id fields: old value is required for where clause.
 		}
 	}
 
 	public function expression(string $name, Expression $expression): void {
-		$this->fields[$name] = $expression;
-		$this->dirty[] = $name;
+		$this->$name = $expression;
 	}
 
 	public function getExpression(string $name): ?Expression {
@@ -64,17 +104,9 @@ class Entity {
 		return $value instanceof Expression ? $value : null;
 	}
 
-	public function getId(): mixed {
-		return $this->fields[$this->idColumn] ?? null;
-	}
-
 	public function __get(string $name): mixed {
 		$value = $this->fields[$name] ?? null;
 		return $value instanceof Expression ? 'expr:{' . $value->getSQL() . '}' : $value;
-	}
-
-	public function __getAllFields(): array {
-		return $this->fields;
 	}
 
 	/**
@@ -108,9 +140,13 @@ class Entity {
 	public function insert(?Configuration $config = null): bool {
 		$this->registerConnectionIfRequired($config);
 		$query = $this->connection->insertEntity($this);
+		$metadata = MetadataManager::getTable(static::class);
 		if (($result = $query->execute()) === true) {
-			$idColumn = MetadataManager::getTable(static::class)->getIdColumnName();
-			$this->fields[$idColumn] = $this->connection->lastInsertId();
+			foreach ($metadata->getIdColumns() as $idColumn) {
+				if ($metadata->getColumn($idColumn)->isAutoIncrement()) {
+					$this->fields[$idColumn] = $this->connection->lastInsertId();
+				}
+			}
 			$this->resetDirtyState();
 		}
 		return $result;
@@ -124,9 +160,13 @@ class Entity {
 	public function delete(?Configuration $config = null): bool {
 		$this->registerConnectionIfRequired($config);
 		$query = $this->connection->deleteEntity($this);
+		$metadata = MetadataManager::getTable(static::class);
 		if (($result = $query->execute()) === true) {
-			$idColumn = MetadataManager::getTable(static::class)->getIdColumnName();
-			unset($this->fields[$idColumn]);
+			foreach ($metadata->getIdColumns() as $idColumn) {
+				if ($metadata->getColumn($idColumn)->isAutoIncrement()) {
+					unset($this->fields[$idColumn]);
+				}
+			}
 			$this->resetDirtyState();
 		}
 		return $result;
@@ -150,4 +190,30 @@ class Entity {
 			$this->connection = ConnectionManager::get();
 		}
 	}
+
+	public function jsonSerialize(): array {
+		return array_filter(
+			$this->fields,
+			fn(string $fieldName) => isset(self::$jsonSerializableFields[static::class][$fieldName]),
+			ARRAY_FILTER_USE_KEY
+		);
+	}
+
+	private static function collectJsonSerializableFields(): void {
+		if (isset(self::$jsonSerializableFields[static::class])) return;
+
+		$reflection = new ReflectionClass(static::class);
+
+		$fieldNames = array_map(
+			fn(ReflectionProperty $property) => $property->getName(),
+			array_filter(
+				$reflection->getProperties(ReflectionProperty::IS_PUBLIC),
+				fn(ReflectionProperty $property) => empty($property->getAttributes(JsonExclude::class))
+			)
+		);
+
+		// use field names as indices for efficient lookup
+		self::$jsonSerializableFields[static::class] = array_flip($fieldNames);
+	}
+
 }
