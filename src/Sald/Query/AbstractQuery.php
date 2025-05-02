@@ -43,6 +43,11 @@ abstract class AbstractQuery {
 		}
 		return $this->query;
 	}
+
+	public function overrideTableName(string $tableName): self {
+		$this->from = $tableName;
+		return $this;
+	}
 	
 	public function whereLiteral($where): self {
 		$this->setDirty();
@@ -87,7 +92,7 @@ abstract class AbstractQuery {
 		if (empty($this->where)) {
 			return '';
 		}
-		return 'WHERE ' . join(' AND ', array_map(fn($e) => $e->getSQL(), $this->where));
+		return 'WHERE ' . join(' AND ', array_map(fn($e) => is_string($e) ? $e  : $e->getSQL(), $this->where));
 	}
 
 	public function parameter(string $key, mixed $value): self {
