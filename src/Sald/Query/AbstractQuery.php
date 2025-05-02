@@ -44,7 +44,7 @@ abstract class AbstractQuery {
 		return $this->query;
 	}
 
-	public function overrideTableName(string $tableName, ?string $alias = null): self {
+	public function overrideTableName(string $tableName): self {
 		$this->from = $tableName;
 		return $this;
 	}
