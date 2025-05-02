@@ -11,7 +11,7 @@ use Sald\Query\Expression\Condition;
 use Sald\Query\Expression\Expression;
 
 abstract class AbstractQuery {
-	
+
 	protected string $from;
 	private string $query;
 	private bool $dirty = true;
@@ -26,7 +26,7 @@ abstract class AbstractQuery {
 
 	protected string $classname;
 	protected Connection $connection;
-	
+
 	public function __construct(Connection $connection, TableMetadata $metadata) {
 		$this->connection = $connection;
 		$this->tableMetadata = $metadata;
@@ -35,7 +35,7 @@ abstract class AbstractQuery {
 	}
 
 	abstract protected function buildQuery(): string;
-	
+
 	public function getSQL(): string {
 		if ($this->dirty) {
 			$this->query = $this->buildQuery();
@@ -43,7 +43,12 @@ abstract class AbstractQuery {
 		}
 		return $this->query;
 	}
-	
+
+	public function overrideTableName(string $tableName): self {
+		$this->from = $tableName;
+		return $this;
+	}
+
 	public function whereLiteral($where): self {
 		$this->setDirty();
 		$this->where[] = $where;
@@ -74,10 +79,11 @@ abstract class AbstractQuery {
 			return $this->where($idFields[0], $value, $comparator);
 		} else {
 			foreach ($idFields as $key) {
-				if (!isset($value[$key])) {
-					throw new IncompleteDataException('Id field should contain a value for %s.', $key);
+				$objectName = $this->tableMetadata->getColumn($key)->getDbObjectName();
+				if (!isset($value[$objectName])) {
+					throw new IncompleteDataException(sprintf('Id field should contain a value for %s.', $key));
 				}
-				$this->where($key, $value[$key], $comparator);
+				$this->where($key, $value[$objectName], $comparator);
 			}
 			return $this;
 		}
@@ -87,7 +93,7 @@ abstract class AbstractQuery {
 		if (empty($this->where)) {
 			return '';
 		}
-		return 'WHERE ' . join(' AND ', array_map(fn($e) => $e->getSQL(), $this->where));
+		return 'WHERE ' . join(' AND ', array_map(fn($e) => is_string($e) ? $e  : $e->getSQL(), $this->where));
 	}
 
 	public function parameter(string $key, mixed $value): self {
@@ -95,7 +101,7 @@ abstract class AbstractQuery {
 		return $this;
 	}
 
-	
+
 	protected function setDirty(): void {
 		$this->dirty = true;
 	}
