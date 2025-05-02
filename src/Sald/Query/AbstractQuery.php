@@ -43,6 +43,11 @@ abstract class AbstractQuery {
 		}
 		return $this->query;
 	}
+
+	public function overrideTableName(string $tableName, ?string $alias = null): self {
+		$this->from = $tableName;
+		return $this;
+	}
 	
 	public function whereLiteral($where): self {
 		$this->setDirty();
