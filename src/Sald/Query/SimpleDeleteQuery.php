@@ -2,14 +2,7 @@
 
 namespace Sald\Query;
 
-class SimpleDeleteQuery extends AbstractQuery {
-
-	public function execute(): bool {
-		$stmt = $this->connection->prepare($this->getSQL());
-		$this->bindValues($stmt);
-
-		return $this->connection->execute($stmt);
-	}
+class SimpleDeleteQuery extends AbstractMutatingQuery {
 
 	protected function buildQuery(): string {
 		if (empty($this->where)) {
