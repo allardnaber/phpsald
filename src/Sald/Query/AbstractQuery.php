@@ -52,7 +52,6 @@ abstract class AbstractQuery {
 		$this->from = $tableName;
 		return $this;
 	}
-
 	public function whereLiteral(string $where): self {
 		$this->setDirty();
 		$this->where[] = new Expression($where);
