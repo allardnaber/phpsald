@@ -2,30 +2,14 @@
 
 namespace Sald\Query;
 
-class SimpleInsertQuery extends AbstractQuery {
-
-	private array $insertKeys = [];
-
-	public function set(string $key, mixed $value): self {
-		$this->insertKeys[] = $key;
-		$this->parameter('insert_' . $key, $value);
-		return $this;
-	}
+class SimpleInsertQuery extends AbstractMutatingQuery {
 
 	protected function buildQuery(): string {
-		$keysPrefixed = array_map(fn($e) => ':insert_' . $e, $this->insertKeys);
-
 		return sprintf ('INSERT INTO %s (%s) VALUES (%s)',
 			$this->from,
-			join(', ', $this->insertKeys),
-			join(', ', $keysPrefixed)
+			join(', ', array_map(fn(QueryParameter $p) => $p->getColumnName(), $this->getMutations())),
+			join(', ', array_map(fn(QueryParameter $p) => $p->getPlaceholderName(), $this->getMutations()))
 		);
 	}
 
-	public function execute(): bool {
-		$stmt = $this->connection->prepare($this->getSQL());
-		$this->bindValues($stmt);
-
-		return $this->connection->execute($stmt);
-	}
 }

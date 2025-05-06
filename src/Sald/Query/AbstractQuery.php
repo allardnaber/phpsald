@@ -2,6 +2,7 @@
 
 namespace Sald\Query;
 
+use PDO;
 use PDOStatement;
 use Sald\Connection\Connection;
 use Sald\Exception\IncompleteDataException;
@@ -20,6 +21,9 @@ abstract class AbstractQuery {
 	 */
 	protected array $where = [];
 
+	/**
+	 * @var QueryParameter[]
+	 */
 	protected array $parameters = [];
 
 	protected TableMetadata $tableMetadata;
@@ -49,9 +53,9 @@ abstract class AbstractQuery {
 		return $this;
 	}
 
-	public function whereLiteral($where): self {
+	public function whereLiteral(string $where): self {
 		$this->setDirty();
-		$this->where[] = $where;
+		$this->where[] = new Expression($where);
 		return $this;
 	}
 
@@ -60,10 +64,10 @@ abstract class AbstractQuery {
 		$columnName = $this->tableMetadata->getColumn($field)?->getDbObjectName() ?? $field;
 
 		if ($value instanceof Expression) {
-			$insertVal = $value->getSQL();
+			$insertVal = $value;
 		} else {
-			$insertVal = $value === null ? null : ':__where_' . $columnName;
-			$this->parameter('__where_' . $columnName, $value);
+			$this->parameter($field, $value);
+			$insertVal = $this->parameters[$field]->getPlaceholderName();
 		}
 
 		$this->where[] = new Condition($columnName, $comparator, $insertVal);
@@ -93,11 +97,11 @@ abstract class AbstractQuery {
 		if (empty($this->where)) {
 			return '';
 		}
-		return 'WHERE ' . join(' AND ', array_map(fn($e) => is_string($e) ? $e  : $e->getSQL(), $this->where));
+		return 'WHERE ' . join(' AND ', array_map(fn(Expression $e) => $e->getSQL(), $this->where));
 	}
 
 	public function parameter(string $key, mixed $value): self {
-		$this->parameters[$key] = $value;
+		$this->parameters[$key] = new QueryParameter($key, $value, 'where');
 		return $this;
 	}
 
@@ -106,15 +110,30 @@ abstract class AbstractQuery {
 		$this->dirty = true;
 	}
 
-
 	protected function bindValues(PDOStatement $statement): void {
-		foreach ($this->parameters as $key => $value) {
-			if (is_bool($value)) {
-				$statement->bindValue($key, $value, \PDO::PARAM_BOOL);
-			} else if (!($value instanceof Expression)) {
-				$statement->bindValue($key, $value);
+		$this->bindValuesFromQueryParams($statement, $this->parameters);
+	}
+
+	/**
+	 * @param PDOStatement $statement
+	 * @param QueryParameter[] $params
+	 * @return void
+	 */
+	protected function bindValuesFromQueryParams(PDOStatement $statement, array $params): void {
+		foreach ($params as $param) {
+			if (!($param->getValue() instanceof Expression)) {
+				$statement->bindValue($param->getParamName(), $param->getValue(), $this->getTranslatedPdoType($param->getValue()));
 			}
 		}
 	}
+
+	private function getTranslatedPdoType(mixed $value): int {
+		return match (gettype($value)) {
+			'NULL' => PDO::PARAM_NULL,
+			'boolean' => PDO::PARAM_BOOL,
+			'integer' => PDO::PARAM_INT,
+			default => PDO::PARAM_STR,
+		};
+	}
+
 }
-	
