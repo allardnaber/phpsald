@@ -68,6 +68,10 @@ class Entity implements \JsonSerializable {
 		return $instance;
 	}
 
+	public static function byId(mixed $id): static {
+		return self::select()->whereId($id)->fetchSingle();
+	}
+
 	private function setFieldValues(array $fields): void {
 		$columns = MetadataManager::getTable(static::class)?->getColumns() ?? [];
 		foreach ($columns as $column) {
