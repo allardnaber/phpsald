@@ -9,6 +9,7 @@ use Sald\Connection\Configuration;
 use Sald\Connection\Connection;
 use Sald\Connection\ConnectionManager;
 use Sald\Metadata\MetadataManager;
+use Sald\Query\AbstractQuery;
 use Sald\Query\Expression\Expression;
 use Sald\Query\SimpleSelectQuery;
 
@@ -56,6 +57,7 @@ class Entity implements \JsonSerializable {
 		}
 		$this->__int_connection = $connection;
 		$this->setFieldValues($fields);
+		$this->onCreate();
 	}
 
 	public static function newInstance(?Connection $connection = null, array $fields = []): static {
@@ -65,8 +67,13 @@ class Entity implements \JsonSerializable {
 		$instance = clone self::$newInstanceTemplates[static::class];
 		$instance->__int_connection = $connection;
 		$instance->setFieldValues($fields);
+		$instance->onCreate();
 		return $instance;
 	}
+
+	public static function onQuery(AbstractQuery $query): void {}
+
+	public function onCreate(): void {}
 
 	public static function byId(mixed $id): static {
 		return self::select()->whereId($id)->fetchSingle();

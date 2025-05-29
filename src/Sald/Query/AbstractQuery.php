@@ -36,6 +36,7 @@ abstract class AbstractQuery {
 		$this->tableMetadata = $metadata;
 		$this->classname = $metadata->getRealObjectName();
 		$this->from = $metadata->getDbObjectName();
+		call_user_func([$metadata->getRealObjectName(), 'onQuery'], $this);
 	}
 
 	abstract protected function buildQuery(): string;
