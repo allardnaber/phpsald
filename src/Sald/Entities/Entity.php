@@ -29,8 +29,8 @@ class Entity implements \JsonSerializable {
 	private array $__int_fields = [];
 
 	/**
-	 * Keep track of updated fields.
-	 * @var string[] Names of the fields that were changed.
+	 * Keep track of updated fields and their original values.
+	 * @var mixed Array of original values, indexed by field name.
 	 */
 	private array $__int_dirty = [];
 
@@ -93,9 +93,11 @@ class Entity implements \JsonSerializable {
 				sprintf('Property %s of %s is not editable.', $name, static::class));
 		}
 		if (!isset($this->__int_fields[$name]) || $this->__int_fields[$name] !== $value) {
+			// Mark dirty only if this has not yet been done, otherwise we will lose the original value.
+			if (!isset($this->__int_dirty[$name])) {
+				$this->__int_dirty[$name] = $this->__int_fields[$name] ?? null;
+			}
 			$this->__int_fields[$name] = $value;
-			$this->__int_dirty[] = $name;
-			//@todo : editable id fields: old value is required for where clause.
 		}
 	}
 
@@ -110,6 +112,11 @@ class Entity implements \JsonSerializable {
 
 	public function __get(string $name): mixed {
 		$value = $this->__int_fields[$name] ?? null;
+		return $value instanceof Expression ? 'expr:{' . $value->getSQL() . '}' : $value;
+	}
+
+	public function getOriginalValue(string $name): mixed {
+		$value = $this->__int_dirty[$name] ?? $this->__int_fields[$name] ?? null;
 		return $value instanceof Expression ? 'expr:{' . $value->getSQL() . '}' : $value;
 	}
 
@@ -177,10 +184,11 @@ class Entity implements \JsonSerializable {
 	}
 
 	/**
+	 * List the names of the fields that have updated values.
 	 * @return string[]
 	 */
 	public function getDirtyFields(): array {
-		return $this->__int_dirty;
+		return array_keys($this->__int_dirty);
 	}
 
 	private function resetDirtyState(): void {
