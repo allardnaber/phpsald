@@ -8,18 +8,33 @@ class PgsqlResultMapper extends ResultMapper {
 
 	protected function convertRecord(array $record): array {
 		foreach ($this->getMetadata() as $column) {
-			if (str_starts_with($column->getNativeType() ?? '', '_')) {
-				$value = $record[$column->getName()] ?? null;
-				if ($value !== null) {
-					if (!str_starts_with($value, '{') || !str_ends_with($value, '}')) {
-						throw new InvalidResultException(sprintf('Array value for column %s should be enclosed in braces. %s', $column->getName(), $value));
+			switch($column->getNativeType()) {
+				case 'json':
+				case 'jsonb':
+					$record[$column->getName()] = json_decode($record[$column->getName()]) ?? null;
+					break;
+
+				default:
+					if (str_starts_with($column->getNativeType() ?? '', '_')) {
+						$record[$column->getName()] = $this->expandArrayValue($record[$column->getName()]);
 					}
-					// @todo multidimensional arrays
-					$record[$column->getName()] = empty($value) ? null : json_decode('[' . substr($value, 1, -1) . ']');
-				}
 			}
+
 		}
 
 		return $record;
+	}
+
+	private function expandArrayValue(?string $value): ?array {
+		if (empty($value)) {
+			return null;
+		}
+
+		if (!str_starts_with($value, '{') || !str_ends_with($value, '}')) {
+			throw new InvalidResultException(sprintf('Array value for column %s should be enclosed in braces. %s', $column->getName(), $value));
+		}
+
+		// @todo multidimensional arrays
+		return json_decode('[' . substr($value, 1, -1) . ']');
 	}
 }
