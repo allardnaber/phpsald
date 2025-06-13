@@ -11,7 +11,7 @@ class PgsqlResultMapper extends ResultMapper {
 			switch($column->getNativeType()) {
 				case 'json':
 				case 'jsonb':
-					$record[$column->getName()] = json_decode($record[$column->getName()]) ?? null;
+					$record[$column->getName()] = json_decode($record[$column->getName()] ?? 'null');
 					break;
 
 				default:
