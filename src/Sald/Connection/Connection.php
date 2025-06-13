@@ -5,8 +5,8 @@ namespace Sald\Connection;
 use PDO;
 use PDOStatement;
 use Sald\Entities\Entity;
+use Sald\Entities\Mapper\ResultMapper;
 use Sald\Exception\Converter\DbErrorHandler;
-use Sald\Exception\Db\DbException;
 use Sald\Exception\RecordNotFoundException;
 use Sald\Metadata\MetadataManager;
 use Sald\Metadata\TableMetadata;
@@ -65,7 +65,7 @@ class Connection extends PDO {
 	 */
 	public function fetchAll(PDOStatement $statement, string $classname): array {
 		try {
-			return array_map(fn(array $record) => $this->asEntity($record, $classname), $statement->fetchAll());
+			return ResultMapper::get($this, $statement)->fetchAll($classname);
 		}
 		catch (\PDOException $e) {
 			throw DbErrorHandler::getDbExceptionWithConnection($e, $this);
@@ -110,7 +110,7 @@ class Connection extends PDO {
 	 */
 	private function fetchOneRecord(PDOStatement $statement, string $classname, bool $strict): ?Entity {
 		try {
-			$result = $statement->fetch();
+			$result = ResultMapper::get($this, $statement)->fetch($classname);
 		} catch (\PDOException $e) {
 			throw DbErrorHandler::getDbExceptionWithConnection($e, $this);
 		}
@@ -123,13 +123,8 @@ class Connection extends PDO {
 				return null;
 			}
 		} else {
-			return $this->asEntity($result, $classname);
+			return $result;
 		}
-	}
-
-	private function asEntity(array $record, string $classname): Entity {
-		/* @see Entity::newInstance() */
-		return $classname::newInstance($this, $record);
 	}
 
 }
