@@ -10,6 +10,7 @@ use Sald\Metadata\TableMetadata;
 use Sald\Query\Expression\Comparator;
 use Sald\Query\Expression\Condition;
 use Sald\Query\Expression\Expression;
+use Sald\Query\Expression\Operator;
 
 abstract class AbstractQuery {
 
@@ -49,6 +50,10 @@ abstract class AbstractQuery {
 		return $this->query;
 	}
 
+	public function getAlias(): ?string {
+		return null;
+	}
+
 	public function overrideTableName(string $tableName): self {
 		$this->from = $tableName;
 		return $this;
@@ -59,19 +64,30 @@ abstract class AbstractQuery {
 		return $this;
 	}
 
-	public function where(string $field, mixed $value, Comparator $comparator = Comparator::EQ): self {
+	public function where(string $field, mixed $value, Comparator|Operator $comparator = Comparator::EQ): self {
 		$this->setDirty();
 		$columnName = $this->tableMetadata->getColumn($field)?->getDbObjectName() ?? $field;
 
 		if ($value instanceof Expression) {
 			$insertVal = $value;
 		} else {
+			if (is_array($value)) {
+				$value = $this->convertArrayToString($value);
+			}
+
 			$this->parameter($field, $value);
 			$insertVal = $this->parameters[$field]->getPlaceholderName();
 		}
 
 		$this->where[] = new Condition($columnName, $comparator, $insertVal);
 		return $this;
+	}
+
+	private function convertArrayToString(array $array): string {
+		return sprintf('{%s}',
+			join(',',
+				array_map(fn($val) => is_numeric($val) ? $val : sprintf("'%s'", addslashes($val)),
+					$array)));
 	}
 
 	public function whereId(mixed $value, Comparator $comparator = Comparator::EQ): self {

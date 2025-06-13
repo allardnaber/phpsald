@@ -23,6 +23,10 @@ class SimpleSelectQuery extends AbstractQuery {
 		$this->setDirty();
 		return $this;
 	}
+
+	public function getAlias(): ?string {
+		return $this->alias;
+	}
 	
 	public function distinct(array|string $fieldOrFields = []): self {
 		$this->distinct = true;
