@@ -6,6 +6,7 @@ use ReflectionClass;
 use ReflectionProperty;
 use Sald\Attributes\Column;
 use Sald\Attributes\Id;
+use Sald\Attributes\OneToMany;
 use Sald\Attributes\Table;
 use Sald\Attributes\Transient;
 use Sald\Exception\ClassNotFoundException;
@@ -86,6 +87,10 @@ class MetadataManager {
 
 	private static function getColumn(ReflectionProperty $reflection): ColumnMetadata {
 		$result = new ColumnMetadata($reflection->getName(), $reflection->getType());
+		$relation = self::getFirstReflectionAttribute($reflection, OneToMany::class);
+		if ($relation instanceof OneToMany) {
+			$result->setOneToMany($relation);
+		}
 		$idAttribute = self::getFirstReflectionAttribute($reflection, Id::class);
 		if ($idAttribute instanceof Id) {
 			$result->applyIdAttribute($idAttribute);

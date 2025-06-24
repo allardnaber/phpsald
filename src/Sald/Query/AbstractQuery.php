@@ -58,9 +58,15 @@ abstract class AbstractQuery {
 		$this->from = $tableName;
 		return $this;
 	}
+
+	public function addCondition(Expression $condition): self {
+		$this->where[] = $condition;
+		return $this;
+	}
+
 	public function whereLiteral(string $where): self {
 		$this->setDirty();
-		$this->where[] = new Expression($where);
+		$this->addCondition(new Expression($where));
 		return $this;
 	}
 
@@ -79,14 +85,14 @@ abstract class AbstractQuery {
 			$insertVal = $this->parameters[$field]->getPlaceholderName();
 		}
 
-		$this->where[] = new Condition($columnName, $comparator, $insertVal);
+		$this->addCondition(new Condition($columnName, $comparator, $insertVal));
 		return $this;
 	}
 
 	private function convertArrayToString(array $array): string {
 		return sprintf('{%s}',
 			join(',',
-				array_map(fn($val) => is_numeric($val) ? $val : sprintf("'%s'", addslashes($val)),
+				array_map(fn($val) => is_numeric($val) ? $val : sprintf("'%s'", addslashes($val ?? '')),
 					$array)));
 	}
 

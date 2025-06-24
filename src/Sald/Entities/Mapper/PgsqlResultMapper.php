@@ -6,6 +6,7 @@ use Sald\Exception\InvalidResultException;
 
 class PgsqlResultMapper extends ResultMapper {
 
+	// @todo can contain duplicate fields (upon select * from tables with columsn having the same name)
 	protected function convertRecord(array $record): array {
 		foreach ($this->getMetadata() as $column) {
 			switch($column->getNativeType()) {

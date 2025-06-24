@@ -3,6 +3,7 @@
 namespace Sald\Query;
 
 use Sald\Entities\Entity;
+use Sald\Metadata\MetadataManager;
 
 class SimpleSelectQuery extends AbstractQuery {
 
@@ -114,28 +115,40 @@ class SimpleSelectQuery extends AbstractQuery {
 		]);
 	}
 
-	public function fetchAll(): array {
+	/**
+	 * @param array|bool $deepFetch Controls which related objects should be fetched. 'True' fetches all related
+	 *                               objects, 'false' none and with an array only the objects linked to the included
+	 *                               property names will be fetched.
+	 * @return array
+	 */
+	public function fetchAll(array|bool $deepFetch = true): array {
 		$stmt = $this->executeAndGetStatement();
-		return $this->connection->fetchAll($stmt, $this->classname);
+		return $this->connection->fetchAll($stmt, $this->classname, $deepFetch);
 	}
 
 	/**
 	 * Fetches a single record, accepts precisely one record to be returned and will throw an exception otherwise.
+	 * @param array|bool $deepFetch Controls which related objects should be fetched. 'True' fetches all related
+	 *                               objects, 'false' none and with an array only the objects linked to the included
+	 *                               property names will be fetched.
 	 * @return Entity
 	 */
-	public function fetchSingle(): Entity {
+	public function fetchSingle(array|bool $deepFetch = true): Entity {
 		$stmt = $this->executeAndGetStatement();
-		return $this->connection->fetchSingle($stmt, $this->classname);
+		return $this->connection->fetchSingle($stmt, $this->classname, $deepFetch);
 	}
 
 	/**
 	 * Similar to fetchSingle, but returns null if no records are available and the first record if the query returns
 	 * multiple records.
+	 * @param array|bool $deepFetch Controls which related objects should be fetched. 'True' fetches all related
+	 *                               objects, 'false' none and with an array only the objects linked to the included
+	 *                               property names will be fetched.
 	 * @return Entity|null Null if the query did not return any records, the first instance of Entity otherwise.
 	 */
-	public function fetchFirst(): ?Entity {
+	public function fetchFirst(array|bool $deepFetch = true): ?Entity {
 		$stmt = $this->executeAndGetStatement();
-		return $this->connection->fetchFirst($stmt, $this->classname);
+		return $this->connection->fetchFirst($stmt, $this->classname, $deepFetch);
 	}
 
 	private function executeAndGetStatement(): \PDOStatement {

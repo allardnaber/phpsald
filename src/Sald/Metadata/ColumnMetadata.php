@@ -4,11 +4,13 @@ namespace Sald\Metadata;
 
 use Sald\Attributes\Column;
 use Sald\Attributes\Id;
+use Sald\Attributes\OneToMany;
 
 class ColumnMetadata extends AbstractMetadata {
 
 	private bool $isIdColumn = false;
 	private ?Id $idAttribute = null;
+	private mixed $relation = null;
 
 	public function __construct(string $objectName, private string $type) {
 		parent::__construct($objectName);
@@ -38,5 +40,13 @@ class ColumnMetadata extends AbstractMetadata {
 
 	public function isEditable(): bool {
 		return !$this->isAutoIncrement();
+	}
+
+	public function setOneToMany(OneToMany $relation): void {
+		$this->relation = $relation;
+	}
+
+	public function getRelation(): OneToMany|null {
+		return $this->relation;
 	}
 }

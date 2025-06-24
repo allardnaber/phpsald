@@ -108,6 +108,10 @@ class Entity implements \JsonSerializable {
 		}
 	}
 
+	public function __set_non_dirty(string $name, mixed $value): void {
+		$this->__int_fields[$name] = $value;
+	}
+
 	public function expression(string $name, Expression $expression): void {
 		$this->$name = $expression;
 	}
