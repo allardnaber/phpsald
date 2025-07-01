@@ -127,7 +127,9 @@ class Entity implements \JsonSerializable {
 	}
 
 	public function getOriginalValue(string $name): mixed {
-		$value = $this->__int_dirty[$name] ?? $this->__int_fields[$name] ?? null;
+		$value = array_key_exists($name, $this->__int_dirty)
+			? $this->__int_dirty[$name]
+			: $this->__int_fields[$name] ?? null;
 		return $value instanceof Expression ? 'expr:{' . $value->getSQL() . '}' : $value;
 	}
 
