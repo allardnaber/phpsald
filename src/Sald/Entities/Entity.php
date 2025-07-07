@@ -15,6 +15,7 @@ use Sald\Query\SimpleSelectQuery;
 
 /**
  * @template T extends Entity
+ * @implements Entity<T>
  */
 class Entity implements \JsonSerializable {
 
