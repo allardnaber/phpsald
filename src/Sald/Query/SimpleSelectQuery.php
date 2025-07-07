@@ -5,9 +5,6 @@ namespace Sald\Query;
 use Sald\Entities\Entity;
 use Sald\Metadata\MetadataManager;
 
-/**
- * @template T extends Entity
- */
 class SimpleSelectQuery extends AbstractQuery {
 
 	private ?string $alias = null;
@@ -122,7 +119,7 @@ class SimpleSelectQuery extends AbstractQuery {
 	 * @param array|bool $deepFetch Controls which related objects should be fetched. 'True' fetches all related
 	 *                               objects, 'false' none and with an array only the objects linked to the included
 	 *                               property names will be fetched.
-	 * @return T[]
+	 * @return array
 	 */
 	public function fetchAll(array|bool $deepFetch = true): array {
 		$stmt = $this->executeAndGetStatement();
@@ -134,7 +131,7 @@ class SimpleSelectQuery extends AbstractQuery {
 	 * @param array|bool $deepFetch Controls which related objects should be fetched. 'True' fetches all related
 	 *                               objects, 'false' none and with an array only the objects linked to the included
 	 *                               property names will be fetched.
-	 * @return Entity<T>
+	 * @return Entity
 	 */
 	public function fetchSingle(array|bool $deepFetch = true): Entity {
 		$stmt = $this->executeAndGetStatement();
@@ -147,7 +144,7 @@ class SimpleSelectQuery extends AbstractQuery {
 	 * @param array|bool $deepFetch Controls which related objects should be fetched. 'True' fetches all related
 	 *                               objects, 'false' none and with an array only the objects linked to the included
 	 *                               property names will be fetched.
-	 * @return T|null Null if the query did not return any records, the first instance of Entity otherwise.
+	 * @return Entity|null Null if the query did not return any records, the first instance of Entity otherwise.
 	 */
 	public function fetchFirst(array|bool $deepFetch = true): ?Entity {
 		$stmt = $this->executeAndGetStatement();
