@@ -7,7 +7,6 @@ use Sald\Metadata\MetadataManager;
 
 /**
  * @template T extends Entity
- * @implements SimpleSelectQuery<T>
  */
 class SimpleSelectQuery extends AbstractQuery {
 
@@ -135,7 +134,7 @@ class SimpleSelectQuery extends AbstractQuery {
 	 * @param array|bool $deepFetch Controls which related objects should be fetched. 'True' fetches all related
 	 *                               objects, 'false' none and with an array only the objects linked to the included
 	 *                               property names will be fetched.
-	 * @return T
+	 * @return Entity<T>
 	 */
 	public function fetchSingle(array|bool $deepFetch = true): Entity {
 		$stmt = $this->executeAndGetStatement();
