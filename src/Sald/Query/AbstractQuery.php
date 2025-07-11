@@ -143,7 +143,10 @@ abstract class AbstractQuery {
 	 */
 	protected function bindValuesFromQueryParams(PDOStatement $statement, array $params): void {
 		foreach ($params as $param) {
-			if (!($param->getValue() instanceof Expression)) {
+			if (is_array($param->getValue())) {
+				$statement->bindValue($param->getParamName(), $this->convertArrayToString($param->getValue()));
+			}
+			elseif (!($param->getValue() instanceof Expression)) {
 				$statement->bindValue($param->getParamName(), $param->getValue(), $this->getTranslatedPdoType($param->getValue()));
 			}
 		}
