@@ -2,6 +2,8 @@
 
 namespace Sald\Exception;
 
-class RecordNotFoundException extends \RuntimeException {
+use RuntimeException;
+
+class RecordNotFoundException extends RuntimeException {
 
 }

@@ -3,6 +3,7 @@
 namespace Sald\Metadata;
 
 use ReflectionClass;
+use ReflectionException;
 use ReflectionProperty;
 use Sald\Attributes\Column;
 use Sald\Attributes\Id;
@@ -42,7 +43,7 @@ class MetadataManager {
 			$result->setIdColumns(self::findIdColumns($columns));
 			return $result;
 
-		} catch (\ReflectionException $e) {
+		} catch (ReflectionException $e) {
 			throw new ClassNotFoundException(
 				sprintf('Class %s does not exist and cannot be used as database entity', $className),
 				$e->getCode(), $e);

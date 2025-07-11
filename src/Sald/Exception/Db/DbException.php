@@ -3,8 +3,9 @@
 namespace Sald\Exception\Db;
 
 use PDOException;
+use RuntimeException;
 
-class DbException extends \RuntimeException {
+class DbException extends RuntimeException {
 
 	private array $errorInfo;
 
