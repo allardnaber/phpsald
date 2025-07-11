@@ -25,6 +25,11 @@ class Connection extends PDO {
 		parent::__construct($dsn, $username, $password, $options);
 	}
 
+	/**
+	 * @template T
+	 * @param class-string<T> $className
+	 * @return SimpleSelectQuery<T>
+	 */
 	public function select(string $className): SimpleSelectQuery {
 		return new SimpleSelectQuery($this, $this->getMetadata($className));
 	}
@@ -59,12 +64,13 @@ class Connection extends PDO {
 
 	/**
 	 * Returns all entities that the query returned.
+	 * @template T extends Entity
 	 * @param PDOStatement $statement The (already executed) statement for which te retrieve the results.
-	 * @param string $classname The classname for the instances to return.
+	 * @param class-string<T> $classname The classname for the instances to return.
 	 * @param array|bool $deepFetch Controls which related objects should be fetched. 'True' fetches all related
 	 *                               objects, 'false' none and with an array only the objects linked to the included
 	 *                               property names will be fetched.
-	 * @return Entity[] The entities that were returned by the query.
+	 * @return T[] The entities that were returned by the query.
 	 */
 	public function fetchAll(PDOStatement $statement, string $classname, array|bool $deepFetch = true): array {
 		try {
@@ -77,12 +83,13 @@ class Connection extends PDO {
 
 	/**
 	 * Fetches a single record, accepts precisely one record to be returned and will throw an exception otherwise.
+	 * @template T extends Entity
 	 * @param PDOStatement $statement The (already executed) statement for which te retrieve the result.
-	 * @param string $classname The classname for the instance to return.
+	 * @param class-string<T> $classname The classname for the instance to return.
 	 * @param array|bool $deepFetch Controls which related objects should be fetched. 'True' fetches all related
 	 *                               objects, 'false' none and with an array only the objects linked to the included
 	 *                               property names will be fetched.
-	 * @return Entity The first instance of Entity
+	 * @return T The first instance of Entity
 	 * @throws RecordNotFoundException If the record is not found.
 	 */
 	public function fetchSingle(PDOStatement $statement, string $classname, array|bool $deepFetch = true): Entity {
@@ -91,12 +98,13 @@ class Connection extends PDO {
 
 	/**
 	 * Fetches a single record (the first if the query returns multiple records) or null if no records are available.
+	 * @template T extends Entity
 	 * @param PDOStatement $statement The (already executed) statement for which te retrieve the result.
-	 * @param string $classname The classname for the instance to return.
+	 * @param class-string<T> $classname The classname for the instance to return.
 	 * @param array|bool $deepFetch Controls which related objects should be fetched. 'True' fetches all related
 	 *                               objects, 'false' none and with an array only the objects linked to the included
 	 *                               property names will be fetched.
-	 * @return Entity|null Null if the query did not return any records, the first instance of Entity otherwise.
+	 * @return T|null Null if the query did not return any records, the first instance of Entity otherwise.
 	 */
 	public function fetchFirst(PDOStatement $statement, string $classname, array|bool $deepFetch = true): ?Entity {
 		return $this->fetchOneRecord($statement, $classname, false, $deepFetch);
@@ -111,13 +119,14 @@ class Connection extends PDO {
 	}
 
 	/**
+	 * @template T extends Entity
 	 * @param PDOStatement $statement
-	 * @param string $classname
+	 * @param class-string<T> $classname
 	 * @param bool $strict Whether to throw an exception if no record was found.
 	 * @param array|bool $deepFetch Controls which related objects should be fetched. 'True' fetches all related
 	 *                                objects, 'false' none and with an array only the objects linked to the included
 	 *                                property names will be fetched.
-	 * @return Entity|null
+	 * @return T|null
 	 */
 
 	private function fetchOneRecord(PDOStatement $statement, string $classname, bool $strict, array|bool $deepFetch = true): ?Entity {
