@@ -2,9 +2,10 @@
 
 namespace Sald\Attributes;
 
+use Attribute;
 use Sald\Query\Expression\Condition;
 
-#[\Attribute(\Attribute::TARGET_PROPERTY)]
+#[Attribute(Attribute::TARGET_PROPERTY)]
 class OneToMany {
 	public function __construct(
 		private string $classname,

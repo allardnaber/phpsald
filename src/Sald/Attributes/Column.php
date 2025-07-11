@@ -2,9 +2,9 @@
 
 namespace Sald\Attributes;
 
-use PDO;
+use Attribute;
 
-#[\Attribute(\Attribute::TARGET_PROPERTY)]
+#[Attribute(Attribute::TARGET_PROPERTY)]
 class Column {
 	public function __construct(private string $name) {}
 

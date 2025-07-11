@@ -1,9 +1,11 @@
-<?php
+<?php /** @noinspection PhpUnused */
 
 namespace Sald\Entities;
 
+use JsonSerializable;
 use ReflectionClass;
 use ReflectionProperty;
+use RuntimeException;
 use Sald\Attributes\JsonExclude;
 use Sald\Connection\Configuration;
 use Sald\Connection\Connection;
@@ -13,7 +15,7 @@ use Sald\Query\AbstractQuery;
 use Sald\Query\Expression\Expression;
 use Sald\Query\SimpleSelectQuery;
 
-class Entity implements \JsonSerializable {
+class Entity implements JsonSerializable {
 
 	/**
 	 * The connection which generated this entity. If multiple connections are used, the same connection will be used
@@ -96,7 +98,7 @@ class Entity implements \JsonSerializable {
 
 	public function __set(string $name, mixed $value): void {
 		if (MetadataManager::getTable(static::class)->getColumn($name)?->isEditable() === false) {
-			throw new \RuntimeException(
+			throw new RuntimeException(
 				sprintf('Property %s of %s is not editable.', $name, static::class));
 		}
 		if (!isset($this->__int_fields[$name]) || $this->__int_fields[$name] !== $value) {

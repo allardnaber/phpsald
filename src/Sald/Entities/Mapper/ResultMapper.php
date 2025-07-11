@@ -29,7 +29,7 @@ abstract class ResultMapper {
 	 */
 	private array $metadata = [];
 
-	private function __construct(private readonly Connection $connection, private readonly PDOStatement $statement) {
+	private function __construct(private Connection $connection, private PDOStatement $statement) {
 		$this->fetchMetadata();
 	}
 
@@ -85,7 +85,7 @@ abstract class ResultMapper {
 	 * @param ColumnMetadata $column
 	 * @return void
 	 */
-	private function deepFetchProperty(array &$records, ColumnMetadata $column): void {
+	private function deepFetchProperty(array $records, ColumnMetadata $column): void {
 		$relation = $column->getRelation();
 
 		$referencedIdColumn = $relation->getReferencedBy();
@@ -120,6 +120,12 @@ abstract class ResultMapper {
 
 	}
 
+	/**
+	 * @template T
+	 * @param array $record
+	 * @param class-string<T> $classname
+	 * @return T
+	 */
 	private function asEntity(array $record, string $classname): Entity {
 		return $classname::newInstance($this->connection, $record);
 	}

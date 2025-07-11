@@ -1,7 +1,9 @@
-<?php
+<?php /** @noinspection PhpUnused */
 
 namespace Sald\Query;
 
+use PDOStatement;
+use RuntimeException;
 use Sald\Entities\Entity;
 
 /**
@@ -153,14 +155,14 @@ class SimpleSelectQuery extends AbstractQuery {
 		return $this->connection->fetchFirst($stmt, $this->classname, $deepFetch);
 	}
 
-	private function executeAndGetStatement(): \PDOStatement {
+	private function executeAndGetStatement(): PDOStatement {
 		$stmt = $this->connection->prepare($this->getSQL());
 		$this->bindValues($stmt);
 		if ($this->connection->execute($stmt)) {
 			return $stmt;
 		} else {
 			// @TODO error handling up next
-			throw new \RuntimeException('An error occurred');
+			throw new RuntimeException('An error occurred');
 		}
 	}
 

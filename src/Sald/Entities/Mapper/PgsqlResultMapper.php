@@ -6,7 +6,7 @@ use Sald\Exception\InvalidResultException;
 
 class PgsqlResultMapper extends ResultMapper {
 
-	// @todo can contain duplicate fields (upon select * from tables with columsn having the same name)
+	// @todo can contain duplicate fields (upon select * from tables with columns having the same name)
 	protected function convertRecord(array $record): array {
 		foreach ($this->getMetadata() as $column) {
 			switch($column->getNativeType()) {
@@ -32,7 +32,7 @@ class PgsqlResultMapper extends ResultMapper {
 		}
 
 		if (!str_starts_with($value, '{') || !str_ends_with($value, '}')) {
-			throw new InvalidResultException(sprintf('Array value for column %s should be enclosed in braces. %s', $column->getName(), $value));
+			throw new InvalidResultException(sprintf('Array value should be enclosed in braces. %s', $value));
 		}
 
 		// @todo multidimensional arrays

@@ -3,6 +3,7 @@
 namespace Sald\Connection;
 
 use PDO;
+use PDOException;
 use PDOStatement;
 use Sald\Entities\Entity;
 use Sald\Entities\Mapper\ResultMapper;
@@ -76,7 +77,7 @@ class Connection extends PDO {
 		try {
 			return ResultMapper::get($this, $statement)->fetchAll($classname, $deepFetch);
 		}
-		catch (\PDOException $e) {
+		catch (PDOException $e) {
 			throw DbErrorHandler::getDbExceptionWithConnection($e, $this);
 		}
 	}
@@ -113,7 +114,7 @@ class Connection extends PDO {
 	public function execute(PDOStatement $statement, ?array $params = null): bool {
 		try {
 			return $statement->execute($params);
-		} catch (\PDOException $e) {
+		} catch (PDOException $e) {
 			throw DbErrorHandler::getDbExceptionWithConnection($e, $this);
 		}
 	}
@@ -132,7 +133,7 @@ class Connection extends PDO {
 	private function fetchOneRecord(PDOStatement $statement, string $classname, bool $strict, array|bool $deepFetch = true): ?Entity {
 		try {
 			$result = ResultMapper::get($this, $statement)->fetch($classname, $deepFetch);
-		} catch (\PDOException $e) {
+		} catch (PDOException $e) {
 			throw DbErrorHandler::getDbExceptionWithConnection($e, $this);
 		}
 
