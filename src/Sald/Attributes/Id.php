@@ -9,7 +9,7 @@ class Id {
 
 	public const AUTO_INCREMENT = 1;
 
-	public function __construct(private int $flags = 0) {}
+	public function __construct(private readonly int $flags = 0) {}
 
 	public function hasFlag(int $flag): bool {
 		return $this->flags & $flag > 0;

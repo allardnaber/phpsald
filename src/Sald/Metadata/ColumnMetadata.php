@@ -12,7 +12,7 @@ class ColumnMetadata extends AbstractMetadata {
 	private ?Id $idAttribute = null;
 	private mixed $relation = null;
 
-	public function __construct(string $objectName, private string $type) {
+	public function __construct(string $objectName, private readonly string $type) {
 		parent::__construct($objectName);
 	}
 

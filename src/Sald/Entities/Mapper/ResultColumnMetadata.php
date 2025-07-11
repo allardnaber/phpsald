@@ -4,7 +4,7 @@ namespace Sald\Entities\Mapper;
 
 class ResultColumnMetadata {
 
-	public function __construct(private array $metadata) {}
+	public function __construct(private readonly array $metadata) {}
 
 	public function getNativeType(): ?string { return $this->metadata['native_type'] ?? null; }
 	public function getPDOType(): ?int { return $this->metadata['pdo_type'] ?? null; }

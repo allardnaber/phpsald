@@ -6,7 +6,7 @@ class QueryParameter {
 
 	private string $paramName;
 
-	public function __construct(private string $columnName, private mixed $value, string $type) {
+	public function __construct(private readonly string $columnName, private readonly mixed $value, string $type) {
 		$this->paramName = $this->generateParameterName($this->columnName, $type);
 	}
 

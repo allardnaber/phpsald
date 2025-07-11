@@ -29,7 +29,7 @@ abstract class ResultMapper {
 	 */
 	private array $metadata = [];
 
-	private function __construct(private Connection $connection, private PDOStatement $statement) {
+	private function __construct(private Connection $connection, private readonly PDOStatement $statement) {
 		$this->fetchMetadata();
 	}
 

@@ -8,12 +8,12 @@ use Sald\Query\Expression\Condition;
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class OneToMany {
 	public function __construct(
-		private string $classname,
-		private string $referencedBy,
-		private string $references,
-		private ?Condition $condition = null,
-		private ?string $tableName = null,
-		private ?string $alias = null
+		private readonly string $classname,
+		private readonly string $referencedBy,
+		private readonly string $references,
+		private readonly ?Condition $condition = null,
+		private readonly ?string $tableName = null,
+		private readonly ?string $alias = null
 	) {}
 
 	/**
