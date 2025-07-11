@@ -136,7 +136,7 @@ class Entity implements \JsonSerializable {
 	/**
 	 * Creates a select query to retrieve one or more instances if this entity.
 	 * @param Configuration|null $config Configuration to get a specific connection, use default connection if omitted.
-	 * @return SimpleSelectQuery The base query to which criteria or other SQL elements can be added.
+	 * @return SimpleSelectQuery<static> The base query to which criteria or other SQL elements can be added.
 	 */
 	public static function select(?Configuration $config = null): SimpleSelectQuery {
 		return ConnectionManager::get($config)->select(static::class);
