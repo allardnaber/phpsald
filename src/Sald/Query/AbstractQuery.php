@@ -5,6 +5,7 @@ namespace Sald\Query;
 use PDO;
 use PDOStatement;
 use Sald\Connection\Connection;
+use Sald\Entities\Mapper\InputMapper;
 use Sald\Exception\IncompleteDataException;
 use Sald\Metadata\TableMetadata;
 use Sald\Query\Expression\Comparator;
@@ -77,23 +78,12 @@ abstract class AbstractQuery {
 		if ($value instanceof Expression) {
 			$insertVal = $value;
 		} else {
-			if (is_array($value)) {
-				$value = $this->convertArrayToString($value);
-			}
-
 			$this->parameter($field, $value);
 			$insertVal = $this->parameters[$field]->getPlaceholderName();
 		}
 
 		$this->addCondition(new Condition($columnName, $comparator, $insertVal));
 		return $this;
-	}
-
-	private function convertArrayToString(array $array): string {
-		return sprintf('{%s}',
-			join(',',
-				array_map(fn($val) => is_numeric($val) ? $val : sprintf("'%s'", addslashes($val ?? '')),
-					$array)));
 	}
 
 	public function whereId(mixed $value, Comparator $comparator = Comparator::EQ): self {
@@ -142,12 +132,10 @@ abstract class AbstractQuery {
 	 * @return void
 	 */
 	protected function bindValuesFromQueryParams(PDOStatement $statement, array $params): void {
+		$mapper = InputMapper::get($this->connection, $this->tableMetadata);
 		foreach ($params as $param) {
-			if (is_array($param->getValue())) {
-				$statement->bindValue($param->getParamName(), $this->convertArrayToString($param->getValue()));
-			}
-			elseif (!($param->getValue() instanceof Expression)) {
-				$statement->bindValue($param->getParamName(), $param->getValue(), $this->getTranslatedPdoType($param->getValue()));
+			if (!($param->getValue() instanceof Expression)) {
+				$statement->bindValue($param->getParamName(), $mapper->convertInput($param), $this->getTranslatedPdoType($param->getValue()));
 			}
 		}
 	}
