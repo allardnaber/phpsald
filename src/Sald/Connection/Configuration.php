@@ -5,15 +5,17 @@ namespace Sald\Connection;
 use PDOException;
 use Sald\Exception\Converter\DbErrorHandler;
 use Sald\Exception\Db\Connection\DbConnectionException;
+use SensitiveParameter;
 
 class Configuration {
 
-	private string $dsn, $username, $password;
+	private string $dsn, $username;
+	private string $password;
 	private ?array $options;
 
 	private string $checksum;
 
-	public function __construct(string $dsn, string $username, string $password, ?array $options = null) {
+	public function __construct(string $dsn, string $username, #[SensitiveParameter] string $password, ?array $options = null) {
 		$this->dsn = $dsn;
 		$this->username = $username;
 		$this->password = $password;

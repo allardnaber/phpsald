@@ -19,7 +19,7 @@ use Sald\Query\SimpleUpdateQuery;
 
 class Connection extends PDO {
 
-	public function __construct(string $dsn, ?string $username = null, ?string $password = null, ?array $options = null) {
+	public function __construct(string $dsn, ?string $username = null, #[\SensitiveParameter] ?string $password = null, ?array $options = null) {
 		$options = $options ?? [];
 		$options[PDO::ATTR_ERRMODE] = PDO::ERRMODE_EXCEPTION;
 		$options[PDO::ATTR_DEFAULT_FETCH_MODE] = PDO::FETCH_ASSOC;
