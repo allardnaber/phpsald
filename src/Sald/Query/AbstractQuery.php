@@ -1,15 +1,17 @@
-<?php
+<?php /** @noinspection PhpUnused */
 
 namespace Sald\Query;
 
 use PDO;
 use PDOStatement;
 use Sald\Connection\Connection;
+use Sald\Entities\Mapper\InputMapper;
 use Sald\Exception\IncompleteDataException;
 use Sald\Metadata\TableMetadata;
 use Sald\Query\Expression\Comparator;
 use Sald\Query\Expression\Condition;
 use Sald\Query\Expression\Expression;
+use Sald\Query\Expression\Operator;
 
 abstract class AbstractQuery {
 
@@ -36,6 +38,7 @@ abstract class AbstractQuery {
 		$this->tableMetadata = $metadata;
 		$this->classname = $metadata->getRealObjectName();
 		$this->from = $metadata->getDbObjectName();
+		call_user_func([$metadata->getRealObjectName(), 'onQuery'], $this);
 	}
 
 	abstract protected function buildQuery(): string;
@@ -48,17 +51,27 @@ abstract class AbstractQuery {
 		return $this->query;
 	}
 
+	public function getAlias(): ?string {
+		return null;
+	}
+
 	public function overrideTableName(string $tableName): self {
 		$this->from = $tableName;
 		return $this;
 	}
-	public function whereLiteral(string $where): self {
-		$this->setDirty();
-		$this->where[] = new Expression($where);
+
+	public function addCondition(Expression $condition): self {
+		$this->where[] = $condition;
 		return $this;
 	}
 
-	public function where(string $field, mixed $value, Comparator $comparator = Comparator::EQ): self {
+	public function whereLiteral(string $where): self {
+		$this->setDirty();
+		$this->addCondition(new Expression($where));
+		return $this;
+	}
+
+	public function where(string $field, mixed $value, Comparator|Operator $comparator = Comparator::EQ): self {
 		$this->setDirty();
 		$columnName = $this->tableMetadata->getColumn($field)?->getDbObjectName() ?? $field;
 
@@ -69,7 +82,7 @@ abstract class AbstractQuery {
 			$insertVal = $this->parameters[$field]->getPlaceholderName();
 		}
 
-		$this->where[] = new Condition($columnName, $comparator, $insertVal);
+		$this->addCondition(new Condition($columnName, $comparator, $insertVal));
 		return $this;
 	}
 
@@ -119,9 +132,10 @@ abstract class AbstractQuery {
 	 * @return void
 	 */
 	protected function bindValuesFromQueryParams(PDOStatement $statement, array $params): void {
+		$mapper = InputMapper::get($this->connection, $this->tableMetadata);
 		foreach ($params as $param) {
 			if (!($param->getValue() instanceof Expression)) {
-				$statement->bindValue($param->getParamName(), $param->getValue(), $this->getTranslatedPdoType($param->getValue()));
+				$statement->bindValue($param->getParamName(), $mapper->convertInput($param), $this->getTranslatedPdoType($param->getValue()));
 			}
 		}
 	}

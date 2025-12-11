@@ -48,7 +48,7 @@ class EntityQueryFactory {
 		$idKey = [];
 		foreach ($metadata->getIdColumns() as $key) {
 			$colName = $metadata->getColumn($key)->getDbObjectName();
-			$idKey[$colName] = $entity->$key;
+			$idKey[$colName] = $entity->getOriginalValue($key);
 		}
 		$query->whereId($idKey);
 	}

@@ -2,6 +2,7 @@
 
 namespace Sald\Exception\Converter;
 
+use PDOException;
 use Sald\Exception\Db\Connection\DbConnectionException;
 use Sald\Exception\Db\Connection\DbDatabaseDoesNotExistException;
 use Sald\Exception\Db\Data\DbColumnDoesNotExistException;
@@ -35,12 +36,12 @@ class PgsqlErrorConverter implements ErrorConverter {
 			'53' => DbSystemException::class, // Class 53 — Insufficient Resources
 			'54' => DbSystemException::class, // Class 54 — Program Limit Exceeded
 			'57' => DbSystemException::class, // Class 57 — Operator Intervention
-			'58' => DbSystemException::class, // Class 58 — System Error (errors external to PostgreSQL itself)
+			'58' => DbSystemException::class, // Class 58 — System Error (errors external to Postgresql itself)
 			'XX' => DbSystemException::class, // Class XX — Internal Error
 		]
 	];
 
-	public function convert(\PDOException $exception, ?string $sqlState = null, ?string $driverCode = null, ?string $driverMessage = null): DbException {
+	public function convert(PDOException $exception, ?string $sqlState = null, ?string $driverCode = null, ?string $driverMessage = null): DbException {
 		if ($sqlState === null) return DbException::fromException($exception);
 		$lengths = array_keys(self::CONVERSION_TABLE);
 

@@ -3,9 +3,11 @@
 namespace Sald\Metadata;
 
 use ReflectionClass;
+use ReflectionException;
 use ReflectionProperty;
 use Sald\Attributes\Column;
 use Sald\Attributes\Id;
+use Sald\Attributes\OneToMany;
 use Sald\Attributes\Table;
 use Sald\Attributes\Transient;
 use Sald\Exception\ClassNotFoundException;
@@ -41,7 +43,7 @@ class MetadataManager {
 			$result->setIdColumns(self::findIdColumns($columns));
 			return $result;
 
-		} catch (\ReflectionException $e) {
+		} catch (ReflectionException $e) {
 			throw new ClassNotFoundException(
 				sprintf('Class %s does not exist and cannot be used as database entity', $className),
 				$e->getCode(), $e);
@@ -86,6 +88,10 @@ class MetadataManager {
 
 	private static function getColumn(ReflectionProperty $reflection): ColumnMetadata {
 		$result = new ColumnMetadata($reflection->getName(), $reflection->getType());
+		$relation = self::getFirstReflectionAttribute($reflection, OneToMany::class);
+		if ($relation instanceof OneToMany) {
+			$result->setOneToMany($relation);
+		}
 		$idAttribute = self::getFirstReflectionAttribute($reflection, Id::class);
 		if ($idAttribute instanceof Id) {
 			$result->applyIdAttribute($idAttribute);

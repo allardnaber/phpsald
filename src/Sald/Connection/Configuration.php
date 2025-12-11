@@ -2,6 +2,7 @@
 
 namespace Sald\Connection;
 
+use PDOException;
 use Sald\Exception\Converter\DbErrorHandler;
 use Sald\Exception\Db\Connection\DbConnectionException;
 
@@ -23,7 +24,7 @@ class Configuration {
 	public function createConnection(): Connection {
 		try {
 			return new Connection($this->dsn, $this->username, $this->password, $this->options);
-		} catch (\PDOException $e) {
+		} catch (PDOException $e) {
 			$driverParts = explode(':', $this->dsn, 2);
 			if (count($driverParts) > 1) {
 				throw DbErrorHandler::getDbException($e, $driverParts[0]);

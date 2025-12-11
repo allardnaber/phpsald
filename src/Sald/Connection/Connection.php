@@ -3,10 +3,11 @@
 namespace Sald\Connection;
 
 use PDO;
+use PDOException;
 use PDOStatement;
 use Sald\Entities\Entity;
+use Sald\Entities\Mapper\ResultMapper;
 use Sald\Exception\Converter\DbErrorHandler;
-use Sald\Exception\Db\DbException;
 use Sald\Exception\RecordNotFoundException;
 use Sald\Metadata\MetadataManager;
 use Sald\Metadata\TableMetadata;
@@ -25,6 +26,11 @@ class Connection extends PDO {
 		parent::__construct($dsn, $username, $password, $options);
 	}
 
+	/**
+	 * @template T
+	 * @param class-string<T> $className
+	 * @return SimpleSelectQuery<T>
+	 */
 	public function select(string $className): SimpleSelectQuery {
 		return new SimpleSelectQuery($this, $this->getMetadata($className));
 	}
@@ -59,59 +65,75 @@ class Connection extends PDO {
 
 	/**
 	 * Returns all entities that the query returned.
+	 * @template T extends Entity
 	 * @param PDOStatement $statement The (already executed) statement for which te retrieve the results.
-	 * @param string $classname The classname for the instances to return.
-	 * @return Entity[] The entities that were returned by the query.
+	 * @param class-string<T> $classname The classname for the instances to return.
+	 * @param array|bool $deepFetch Controls which related objects should be fetched. 'True' fetches all related
+	 *                               objects, 'false' none and with an array only the objects linked to the included
+	 *                               property names will be fetched.
+	 * @return T[] The entities that were returned by the query.
 	 */
-	public function fetchAll(PDOStatement $statement, string $classname): array {
+	public function fetchAll(PDOStatement $statement, string $classname, array|bool $deepFetch = true): array {
 		try {
-			return array_map(fn(array $record) => $this->asEntity($record, $classname), $statement->fetchAll());
+			return ResultMapper::get($this, $statement)->fetchAll($classname, $deepFetch);
 		}
-		catch (\PDOException $e) {
+		catch (PDOException $e) {
 			throw DbErrorHandler::getDbExceptionWithConnection($e, $this);
 		}
 	}
 
 	/**
 	 * Fetches a single record, accepts precisely one record to be returned and will throw an exception otherwise.
+	 * @template T extends Entity
 	 * @param PDOStatement $statement The (already executed) statement for which te retrieve the result.
-	 * @param string $classname The classname for the instance to return.
-	 * @return Entity The first instance of Entity
+	 * @param class-string<T> $classname The classname for the instance to return.
+	 * @param array|bool $deepFetch Controls which related objects should be fetched. 'True' fetches all related
+	 *                               objects, 'false' none and with an array only the objects linked to the included
+	 *                               property names will be fetched.
+	 * @return T The first instance of Entity
 	 * @throws RecordNotFoundException If the record is not found.
 	 */
-	public function fetchSingle(PDOStatement $statement, string $classname): Entity {
-		return $this->fetchOneRecord($statement, $classname, true);
+	public function fetchSingle(PDOStatement $statement, string $classname, array|bool $deepFetch = true): Entity {
+		return $this->fetchOneRecord($statement, $classname, true, $deepFetch);
 	}
 
 	/**
 	 * Fetches a single record (the first if the query returns multiple records) or null if no records are available.
+	 * @template T extends Entity
 	 * @param PDOStatement $statement The (already executed) statement for which te retrieve the result.
-	 * @param string $classname The classname for the instance to return.
-	 * @return Entity|null Null if the query did not return any records, the first instance of Entity otherwise.
+	 * @param class-string<T> $classname The classname for the instance to return.
+	 * @param array|bool $deepFetch Controls which related objects should be fetched. 'True' fetches all related
+	 *                               objects, 'false' none and with an array only the objects linked to the included
+	 *                               property names will be fetched.
+	 * @return T|null Null if the query did not return any records, the first instance of Entity otherwise.
 	 */
-	public function fetchFirst(PDOStatement $statement, string $classname): ?Entity {
-		return $this->fetchOneRecord($statement, $classname, false);
+	public function fetchFirst(PDOStatement $statement, string $classname, array|bool $deepFetch = true): ?Entity {
+		return $this->fetchOneRecord($statement, $classname, false, $deepFetch);
 	}
 
 	public function execute(PDOStatement $statement, ?array $params = null): bool {
 		try {
 			return $statement->execute($params);
-		} catch (\PDOException $e) {
+		} catch (PDOException $e) {
 			throw DbErrorHandler::getDbExceptionWithConnection($e, $this);
 		}
 	}
 
 	/**
+	 * @template T extends Entity
 	 * @param PDOStatement $statement
-	 * @param string $classname
+	 * @param class-string<T> $classname
 	 * @param bool $strict Whether to throw an exception if no record was found.
-	 * @return Entity|null
-	 * @throws RecordNotFoundException If no record was found and strict mode is on.
+	 * @param array|bool $deepFetch Controls which related objects should be fetched. 'True' fetches all related
+	 *                                objects, 'false' none and with an array only the objects linked to the included
+	 *                                property names will be fetched.
+	 * @return T|null
 	 */
-	private function fetchOneRecord(PDOStatement $statement, string $classname, bool $strict): ?Entity {
+
+	private function fetchOneRecord(PDOStatement $statement, string $classname, bool $strict, array|bool $deepFetch = true): ?Entity {
 		try {
-			$result = $statement->fetch();
-		} catch (\PDOException $e) {
+			$result = ResultMapper::get($this, $statement)->fetch($classname, $deepFetch);
+		} catch (PDOException $e) {
 			throw DbErrorHandler::getDbExceptionWithConnection($e, $this);
 		}
 
@@ -123,13 +145,8 @@ class Connection extends PDO {
 				return null;
 			}
 		} else {
-			return $this->asEntity($result, $classname);
+			return $result;
 		}
-	}
-
-	private function asEntity(array $record, string $classname): Entity {
-		/* @see Entity::newInstance() */
-		return $classname::newInstance($this, $record);
 	}
 
 }

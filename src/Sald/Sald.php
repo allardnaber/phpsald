@@ -16,6 +16,12 @@ class Sald {
 		return ConnectionManager::get($config);
 	}
 
+	/**
+	 * @template T
+	 * @param class-string<T> $className
+	 * @param Configuration|null $config
+	 * @return SimpleSelectQuery<T>
+	 */
 	public static function select(string $className, ?Configuration $config = null): SimpleSelectQuery {
 		return self::get($config)->select($className);
 	}
