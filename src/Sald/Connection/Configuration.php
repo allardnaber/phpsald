@@ -7,25 +7,22 @@ use Sald\Exception\Converter\DbErrorHandler;
 use Sald\Exception\Db\Connection\DbConnectionException;
 use SensitiveParameter;
 
-class Configuration {
-
-	private string $dsn, $username;
-	private string $password;
-	private ?array $options;
+readonly class Configuration {
 
 	private string $checksum;
 
-	public function __construct(string $dsn, string $username, #[SensitiveParameter] string $password, ?array $options = null) {
-		$this->dsn = $dsn;
-		$this->username = $username;
-		$this->password = $password;
-		$this->options = $options;
-		$this->checksum = md5($dsn . $username . $password . json_encode($options ?? []));
+	public function __construct(
+		private string $dsn,
+		private string $username,
+		#[SensitiveParameter] private string $password,
+		private ?array $options = null,
+		private ?string $schema = null) {
+		$this->checksum = md5($dsn . $username . $password . json_encode($options ?? []) . $schema ?? '');
 	}
 
 	public function createConnection(): Connection {
 		try {
-			return new Connection($this->dsn, $this->username, $this->password, $this->options);
+			return new Connection($this->dsn, $this->username, $this->password, $this->options, $this->schema);
 		} catch (PDOException $e) {
 			$driverParts = explode(':', $this->dsn, 2);
 			if (count($driverParts) > 1) {

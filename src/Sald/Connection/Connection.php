@@ -16,14 +16,29 @@ use Sald\Query\SimpleDeleteQuery;
 use Sald\Query\SimpleInsertQuery;
 use Sald\Query\SimpleSelectQuery;
 use Sald\Query\SimpleUpdateQuery;
+use SensitiveParameter;
 
 class Connection extends PDO {
 
-	public function __construct(string $dsn, ?string $username = null, #[\SensitiveParameter] ?string $password = null, ?array $options = null) {
+	public function __construct(
+		string                        $dsn,
+		?string                       $username = null,
+		#[SensitiveParameter] ?string $password = null,
+		?array $options = null,
+		?string $schema = null
+	) {
 		$options = $options ?? [];
 		$options[PDO::ATTR_ERRMODE] = PDO::ERRMODE_EXCEPTION;
 		$options[PDO::ATTR_DEFAULT_FETCH_MODE] = PDO::FETCH_ASSOC;
 		parent::__construct($dsn, $username, $password, $options);
+		$this->setSchema($schema);
+	}
+
+	private function setSchema(?string $schema): void {
+		if ($schema !== null) {
+			$stmt = $this->prepare(sprintf('SET search_path to %s', $schema));
+			$stmt->execute();
+		}
 	}
 
 	/**
