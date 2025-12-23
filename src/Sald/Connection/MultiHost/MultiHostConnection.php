@@ -19,10 +19,11 @@ class MultiHostConnection extends Connection {
 		string  $dsn,
 		?string $username = null,
 		?string $password = null,
-		?array  $options = null
+		?array  $options = null,
+		?string $schema = null
 	): Connection {
 		// @todo extend so it is possible to switch hosts mid request?
-		return (new MultiHostChooser($dsn, $username, $password, $options))->getConnection();
+		return (new MultiHostChooser($dsn, $username, $password, $options, $schema))->getConnection();
 		//return new MultiHostConnection($chooser, $username, $password, $options);
 	}
 

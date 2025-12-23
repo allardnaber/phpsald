@@ -21,10 +21,11 @@ class MultiHostChooser {
 	private string $driver;
 	private array $dsnValues = [];
 
-	public function __construct(readonly string $dsn,
+	public function __construct(readonly string          $dsn,
 								private readonly ?string $username = null,
 								private readonly ?string $password = null,
-								private readonly ?array  $options = null) {
+								private readonly ?array  $options = null,
+								private readonly ?string $schema = null) {
 		$this->initDsn($dsn);
 		if (isset($this->dsnValues[self::PARAM_SERVER_TYPE])) {
 			$this->targetServerType = TargetServerTypeValues::from($this->dsnValues[self::PARAM_SERVER_TYPE]);
@@ -68,7 +69,7 @@ class MultiHostChooser {
 			$dsn = $this->createDsn($this->driver, $conn);
 
 			try {
-				$test = new Connection($dsn, $this->username, $this->password, $testOptions);
+				$test = new Connection($dsn, $this->username, $this->password, $testOptions, $this->schema);
 			} catch (\PDOException $e) {
 				// @todo log
 				continue;
