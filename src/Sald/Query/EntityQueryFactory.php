@@ -35,7 +35,7 @@ class EntityQueryFactory {
 		}
 
 		$columns = $metadata->getColumns();
-		$dbFields = array_filter($entity->getDirtyFields(), fn(string $field) => $columns[$field]?->isEditable());
+		$dbFields = array_filter($entity->getDirtyFields(), fn(string $field) => isset($columns[$field]) && $columns[$field]?->isEditable());
 
 		foreach ($dbFields as $field) {
 			$expr = $entity->getExpression($field);
