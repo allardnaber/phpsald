@@ -22,7 +22,7 @@ readonly class Configuration {
 
 	public function createConnection(): Connection {
 		try {
-			return new Connection($this->dsn, $this->username, $this->password, $this->options, $this->schema);
+			return ConnectionFactory::create($this->dsn, $this->username, $this->password, $this->options);
 		} catch (PDOException $e) {
 			$driverParts = explode(':', $this->dsn, 2);
 			if (count($driverParts) > 1) {
