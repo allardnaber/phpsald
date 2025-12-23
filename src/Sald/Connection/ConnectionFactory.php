@@ -12,12 +12,12 @@ use Sald\Connection\MultiHost\MultiHostConnection;
  */
 class ConnectionFactory {
 
-	public static function create(string $dsn, ?string $username = null, ?string $password = null, ?array $options = null): Connection {
+	public static function create(string $dsn, ?string $username = null, ?string $password = null, ?array $options = null, ?string $schema = null): Connection {
 		if (preg_match('/(^[a-z]+:|;)host=[^;]+,/i', $dsn)) {
 			// multi host, create specialized connections.
-			return MultiHostConnection::create($dsn, $username, $password, $options);
+			return MultiHostConnection::create($dsn, $username, $password, $options, $schema);
 		}
 
-		return new Connection($dsn, $username, $password, $options);
+		return new Connection($dsn, $username, $password, $options, $schema);
 	}
 }
