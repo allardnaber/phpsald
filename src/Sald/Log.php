@@ -40,12 +40,12 @@ class Log {
 		self::$logger?->notice($message, $context);
 	}
 
-	public static function debug(string|\Stringable $message, array $context = []): void {
-		self::$logger?->debug($message, $context);
-	}
-
 	public static function info(string|\Stringable $message, array $context = []): void {
 		self::$logger?->info($message, $context);
+	}
+
+	public static function debug(string|\Stringable $message, array $context = []): void {
+		self::$logger?->debug($message, $context);
 	}
 
 	public function log($level, string|\Stringable $message, array $context = []): void {
