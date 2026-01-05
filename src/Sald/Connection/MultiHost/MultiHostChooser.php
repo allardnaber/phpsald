@@ -5,7 +5,7 @@ namespace Sald\Connection\MultiHost;
 use PDO;
 use PDOException;
 use Sald\Connection\Connection;
-use Sald\Connection\Log;
+use Sald\Log;
 use Sald\Exception\Db\Connection\DbConnectionException;
 
 class MultiHostChooser {

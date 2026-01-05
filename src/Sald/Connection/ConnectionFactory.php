@@ -3,6 +3,7 @@
 namespace Sald\Connection;
 
 use Sald\Connection\MultiHost\MultiHostConnection;
+use Sald\Log;
 
 /**
  * Factory to create a Sald database Connection. It allows for a distinction between single or multi-host connections.

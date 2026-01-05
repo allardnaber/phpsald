@@ -1,6 +1,6 @@
 <?php
 
-namespace Sald\Connection;
+namespace Sald;
 
 use Psr\Log\LoggerInterface;
 

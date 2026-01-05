@@ -6,6 +6,7 @@ use Monolog\Logger;
 use PDOException;
 use Sald\Exception\Converter\DbErrorHandler;
 use Sald\Exception\Db\Connection\DbConnectionException;
+use Sald\Log;
 use SensitiveParameter;
 
 readonly class Configuration {
