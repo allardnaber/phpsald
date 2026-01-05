@@ -2,6 +2,7 @@
 
 namespace Sald\Connection;
 
+use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use PDOException;
 use Sald\Exception\Converter\DbErrorHandler;
@@ -22,7 +23,12 @@ readonly class Configuration {
 
 		$this->checksum = md5($dsn . $username . $password . json_encode($options ?? []) . $schema ?? '');
 		if (!Log::hasLogger()) {
-			Log::setLogger(new Logger('PHPsald'));
+			Log::setLogger(
+				new Logger(
+					'PHPsald',
+					[ new StreamHandler('php://stdout') ]
+				)
+			);
 		}
 	}
 
