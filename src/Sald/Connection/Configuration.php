@@ -3,6 +3,7 @@
 namespace Sald\Connection;
 
 use Monolog\Handler\StreamHandler;
+use Monolog\Level;
 use Monolog\Logger;
 use PDOException;
 use Sald\Exception\Converter\DbErrorHandler;
@@ -26,7 +27,7 @@ readonly class Configuration {
 			Log::setLogger(
 				new Logger(
 					'PHPsald',
-					[ new StreamHandler('php://stdout') ]
+					[ new StreamHandler('php://stderr'), Level::Info ]
 				)
 			);
 		}
