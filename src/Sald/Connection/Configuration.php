@@ -2,6 +2,7 @@
 
 namespace Sald\Connection;
 
+use Monolog\Logger;
 use PDOException;
 use Sald\Exception\Converter\DbErrorHandler;
 use Sald\Exception\Db\Connection\DbConnectionException;
@@ -17,7 +18,11 @@ readonly class Configuration {
 		#[SensitiveParameter] private string $password,
 		private ?array $options = null,
 		private ?string $schema = null) {
+
 		$this->checksum = md5($dsn . $username . $password . json_encode($options ?? []) . $schema ?? '');
+		if (!Log::hasLogger()) {
+			Log::setLogger(new Logger('PHPsald'));
+		}
 	}
 
 	public function createConnection(): Connection {

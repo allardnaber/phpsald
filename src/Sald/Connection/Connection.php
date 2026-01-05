@@ -5,6 +5,9 @@ namespace Sald\Connection;
 use PDO;
 use PDOException;
 use PDOStatement;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
+use Psr\Log\LoggerInterface;
 use Sald\Entities\Entity;
 use Sald\Entities\Mapper\ResultMapper;
 use Sald\Exception\Converter\DbErrorHandler;
@@ -18,7 +21,9 @@ use Sald\Query\SimpleSelectQuery;
 use Sald\Query\SimpleUpdateQuery;
 use SensitiveParameter;
 
-class Connection extends PDO {
+class Connection extends PDO implements LoggerAwareInterface {
+
+	use LoggerAwareTrait;
 
 	public function __construct(
 		string                        $dsn,

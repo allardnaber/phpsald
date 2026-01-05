@@ -11,6 +11,8 @@
     }
   ],
   "require": {
+	"psr/log": "3.*",
+	"monolog/monolog": "3.10.*",
     "php": ">=8.3",
     "ext-pdo": "*"
   },

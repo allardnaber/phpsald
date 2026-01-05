@@ -15,9 +15,11 @@ class ConnectionFactory {
 	public static function create(string $dsn, ?string $username = null, ?string $password = null, ?array $options = null, ?string $schema = null): Connection {
 		if (preg_match('/(^[a-z]+:|;)host=[^;]+,/i', $dsn)) {
 			// multi host, create specialized connections.
+			Log::debug(sprintf('Using multi host chooser for DSN %s.', $dsn));
 			return MultiHostConnection::create($dsn, $username, $password, $options, $schema);
 		}
 
+		Log::debug(sprintf('Using simple connection for DSN %s.', $dsn));
 		return new Connection($dsn, $username, $password, $options, $schema);
 	}
 }
