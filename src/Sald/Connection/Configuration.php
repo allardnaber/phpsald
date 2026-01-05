@@ -27,7 +27,7 @@ readonly class Configuration {
 			Log::setLogger(
 				new Logger(
 					'PHPsald',
-					[ new StreamHandler("php://stderr") ]
+					[ new StreamHandler("php://stdout") ]
 				)
 			);
 		}
