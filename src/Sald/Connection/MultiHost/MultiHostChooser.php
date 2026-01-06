@@ -3,6 +3,7 @@
 namespace Sald\Connection\MultiHost;
 
 use PDO;
+use PDOException;
 use Psr\Log\LoggerInterface;
 use Sald\Connection\Configuration;
 use Sald\Connection\Connection;
@@ -45,7 +46,7 @@ class MultiHostChooser {
 
 			try {
 				$test = new Connection($trialConfig);
-			} catch (\PDOException $e) {
+			} catch (PDOException $e) {
 				$this->logger?->info(sprintf('Connection to %s failed: %s', $trialConfig->getDsn(), $e->getMessage()));
 				continue;
 			}

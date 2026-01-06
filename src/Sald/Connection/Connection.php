@@ -107,6 +107,7 @@ class Connection extends PDO implements LoggerAwareInterface {
 	 *                               property names will be fetched.
 	 * @return T The first instance of Entity
 	 * @throws RecordNotFoundException If the record is not found.
+	 * @noinspection PhpDocSignatureInspection
 	 */
 	public function fetchSingle(PDOStatement $statement, string $classname, array|bool $deepFetch = true): Entity {
 		return $this->fetchOneRecord($statement, $classname, true, $deepFetch);
@@ -121,6 +122,7 @@ class Connection extends PDO implements LoggerAwareInterface {
 	 *                               objects, 'false' none and with an array only the objects linked to the included
 	 *                               property names will be fetched.
 	 * @return T|null Null if the query did not return any records, the first instance of Entity otherwise.
+	 * @noinspection PhpDocSignatureInspection
 	 */
 	public function fetchFirst(PDOStatement $statement, string $classname, array|bool $deepFetch = true): ?Entity {
 		return $this->fetchOneRecord($statement, $classname, false, $deepFetch);
@@ -143,6 +145,7 @@ class Connection extends PDO implements LoggerAwareInterface {
 	 *                                objects, 'false' none and with an array only the objects linked to the included
 	 *                                property names will be fetched.
 	 * @return T|null
+	 * @noinspection PhpDocSignatureInspection
 	 */
 
 	private function fetchOneRecord(PDOStatement $statement, string $classname, bool $strict, array|bool $deepFetch = true): ?Entity {

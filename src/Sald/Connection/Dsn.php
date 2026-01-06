@@ -27,7 +27,7 @@ class Dsn implements Stringable {
 		foreach(explode(';', $dsnDetails) as $dsnPart) {
 			list ($k, $v) = explode('=', $dsnPart, 2);
 			$this->dsnParts[$k] = $v;
-		};
+		}
 
 		$this->isMultiHost = $this->calculateMultiHost();
 	}

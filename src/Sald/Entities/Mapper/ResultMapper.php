@@ -51,9 +51,8 @@ abstract class ResultMapper {
 		return $record;
 	}
 
-	public function fetchAll(string $classname, array|bool $deepFetch = true): array|bool {
+	public function fetchAll(string $classname, array|bool $deepFetch = true): array {
 		$result = $this->statement->fetchAll(PDO::FETCH_ASSOC);
-		if ($result === false) return false;
 
 		$records = array_map(fn($record) => $this->asEntity($this->convertRecord($record), $classname), $result);
 		$this->deepFetch($classname, $records, $deepFetch);
@@ -125,6 +124,7 @@ abstract class ResultMapper {
 	 * @param array $record
 	 * @param class-string<T> $classname
 	 * @return T
+	 * @noinspection PhpDocSignatureInspection
 	 */
 	private function asEntity(array $record, string $classname): Entity {
 		return $classname::newInstance($this->connection, $record);
