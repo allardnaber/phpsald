@@ -12,7 +12,7 @@ use Sald\Exception\Db\Connection\DbConnectionException;
 class MultiHostChooser {
 
 	private const int DEFAULT_HOST_CHECK_CONNECT_TIMEOUT = 2;
-	private LoggerInterface $logger;
+	private ?LoggerInterface $logger;
 
 	public function __construct(private readonly Configuration $config) {
 		$this->logger = $config->getLogger() ?? null;

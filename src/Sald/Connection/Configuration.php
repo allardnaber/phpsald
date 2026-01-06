@@ -26,6 +26,8 @@ class Configuration {
 	private static array $requiredConfig = [ 'dsn', 'username', 'password' ];
 	private static array $allowedConfig =  [ 'dsn', 'username', 'password', 'options', 'schema', 'logger', 'hostCheckTimeout' ];
 
+	private static array $checksumElements = ['dsn', 'username', 'password', 'options', 'schema'];
+
 	public function __construct(#[SensitiveParameter] array $config) {
 		$missing = array_diff(self::$requiredConfig, array_keys($config));
 		if (!empty($missing)) {
@@ -72,7 +74,11 @@ class Configuration {
 	}
 
 	public function getChecksum(): string {
-		return (serialize($this));
+		$v = [];
+		foreach (self::$checksumElements as $element) {
+			$v[$element] = $this->$element;
+		}
+		return md5(json_encode($v));
 	}
 
 	public function getHostCheckTimeout(): ?int {
