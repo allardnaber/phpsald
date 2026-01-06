@@ -74,6 +74,12 @@ class Dsn implements Stringable {
 	}
 
 	public function __toString(): string {
-		return sprintf('%s:%s', $this->driver, join(';', array_map(fn ($v, $k) => $k . '=' . $v, $this->dsnParts, array_keys($this->dsnParts))));
+		return sprintf('%s:%s',
+			$this->driver,
+			join(';', array_map(
+				fn ($v, $k) => $k . '=' . $v,
+				$this->dsnParts,
+				array_keys($this->dsnParts)
+			)));
 	}
 }

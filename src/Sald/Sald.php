@@ -2,7 +2,9 @@
 
 namespace Sald;
 
+use Psr\Log\LoggerInterface;
 use Sald\Connection\Configuration;
+use Sald\Connection\ConfigurationManager;
 use Sald\Connection\Connection;
 use Sald\Connection\ConnectionManager;
 use Sald\Query\SimpleDeleteQuery;
@@ -14,6 +16,24 @@ class Sald {
 
 	public static function get(?Configuration $config = null): Connection {
 		return ConnectionManager::get($config);
+	}
+
+	/**
+	 * Convenience method to set the default configuration based on an array of settings. This configuration is used
+	 * to connect if no configuration was specified and no connection is available yet.
+	 * @param array{
+	 *     dsn: string,
+	 *     username: string,
+	 *     password: string,
+	 *     options?: ?array,
+	 *     schema?: ?string,
+	 *     logger?: ?LoggerInterface,
+	 *     hostCheckTimeout?: ?int
+	 * } $configArray
+	 * @return void
+	 */
+	public static function setDefaultConfig(array $configArray): void {
+		ConfigurationManager::setDefaultConfig(new Configuration($configArray));
 	}
 
 	/**
