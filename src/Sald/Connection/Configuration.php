@@ -76,7 +76,7 @@ class Configuration {
 	public function getChecksum(): string {
 		$v = [];
 		foreach (self::$checksumElements as $element) {
-			$v[$element] = $this->$element;
+			$v[$element] = $this->$element ?? null;
 		}
 		return md5(json_encode($v));
 	}
