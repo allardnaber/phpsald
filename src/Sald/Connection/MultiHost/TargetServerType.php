@@ -2,7 +2,7 @@
 
 namespace Sald\Connection\MultiHost;
 
-enum TargetServerTypeValues: string {
+enum TargetServerType: string {
 
 	case ANY = 'any';
 	case PRIMARY = 'primary';

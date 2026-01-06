@@ -2,7 +2,7 @@
 
 namespace Sald\Connection;
 
-use Sald\Connection\MultiHost\TargetServerTypeValues;
+use Sald\Connection\MultiHost\TargetServerType;
 use Sald\Exception\SaldPDOException;
 use Stringable;
 
@@ -17,7 +17,7 @@ class Dsn implements Stringable {
 	private array $dsnParts;
 
 	private bool $isMultiHost;
-	private ?TargetServerTypeValues $targetServerType = null;
+	private ?TargetServerType $targetServerType = null;
 
 	public function __construct(string $dsn) {
 		list ($this->driver, $dsnDetails) = explode(':', $dsn, 2);
@@ -52,8 +52,8 @@ class Dsn implements Stringable {
 		$this->dsnParts[$name] = $value;
 	}
 
-	public function getTargetServerType(): TargetServerTypeValues {
-		return $this->targetServerType ?? TargetServerTypeValues::ANY;
+	public function getTargetServerType(): TargetServerType {
+		return $this->targetServerType ?? TargetServerType::ANY;
 	}
 
 	public function isMultiHost(): bool {
@@ -62,7 +62,7 @@ class Dsn implements Stringable {
 
 	private function calculateMultiHost(): bool {
 		if ($this->hasElement(self::PARAM_SERVER_TYPE)) {
-			$this->targetServerType = TargetServerTypeValues::from($this->getElement(self::PARAM_SERVER_TYPE));
+			$this->targetServerType = TargetServerType::from($this->getElement(self::PARAM_SERVER_TYPE));
 			$this->removeElement(self::PARAM_SERVER_TYPE);
 			return true;
 		}

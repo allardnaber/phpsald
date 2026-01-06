@@ -49,7 +49,7 @@ class MultiHostChooser {
 				$this->logger?->info(sprintf('Connection to %s failed: %s', $trialConfig->getDsn(), $e->getMessage()));
 				continue;
 			}
-			if ($targetServerType === TargetServerTypeValues::ANY) {
+			if ($targetServerType === TargetServerType::ANY) {
 				$this->logger?->debug(sprintf('Using %s, as any server type is allowed.', $trialConfig->getDsn()));
 				return $test;
 			}
@@ -58,20 +58,20 @@ class MultiHostChooser {
 			if ($result['transaction_read_only'] === 'off') {
 				$this->logger?->debug(sprintf('Connection to %s fully operational (primary).', $trialConfig->getDsn()));
 				// writable (= primary)
-				if (in_array($targetServerType, [TargetServerTypeValues::PRIMARY, TargetServerTypeValues::PREFER_PRIMARY])) {
+				if (in_array($targetServerType, [TargetServerType::PRIMARY, TargetServerType::PREFER_PRIMARY])) {
 					$this->logger?->info(sprintf('Using primary host %s.', $trialConfig->getDsn()));
 					return $test;
-				} elseif ($targetServerType === TargetServerTypeValues::PREFER_SECONDARY) {
+				} elseif ($targetServerType === TargetServerType::PREFER_SECONDARY) {
 					$this->logger?->debug(sprintf('Keeping primary %s as one of the suitable connections.', $trialConfig->getDsn()));
 					$suitableConnections[] = $test;
 				}
 			} else {
 				$this->logger?->info(sprintf('Connection to %s is in readonly mode (secondary).', $trialConfig->getDsn()));
 				// secondary
-				if (in_array($targetServerType, [TargetServerTypeValues::SECONDARY, TargetServerTypeValues::PREFER_SECONDARY])) {
+				if (in_array($targetServerType, [TargetServerType::SECONDARY, TargetServerType::PREFER_SECONDARY])) {
 					$this->logger?->info(sprintf('Using secondary host %s.', $trialConfig->getDsn()));
 					return $test;
-				} elseif ($targetServerType === TargetServerTypeValues::PREFER_PRIMARY) {
+				} elseif ($targetServerType === TargetServerType::PREFER_PRIMARY) {
 					$this->logger?->debug(sprintf('Keeping secondary %s as one of the suitable connections.', $trialConfig->getDsn()));
 					$suitableConnections[] = $test;
 				}
