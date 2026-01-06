@@ -5,6 +5,8 @@ namespace Sald\Connection;
 use PDO;
 use PDOException;
 use PDOStatement;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
 use Sald\Entities\Entity;
 use Sald\Entities\Mapper\ResultMapper;
 use Sald\Exception\Converter\DbErrorHandler;
@@ -16,22 +18,20 @@ use Sald\Query\SimpleDeleteQuery;
 use Sald\Query\SimpleInsertQuery;
 use Sald\Query\SimpleSelectQuery;
 use Sald\Query\SimpleUpdateQuery;
-use SensitiveParameter;
 
-class Connection extends PDO {
+class Connection extends PDO implements LoggerAwareInterface {
 
-	public function __construct(
-		string                        $dsn,
-		?string                       $username = null,
-		#[SensitiveParameter] ?string $password = null,
-		?array $options = null,
-		?string $schema = null
-	) {
-		$options = $options ?? [];
+	use LoggerAwareTrait;
+
+	public function __construct(private readonly Configuration $config) {
+		$options = $config->getOptions();
 		$options[PDO::ATTR_ERRMODE] = PDO::ERRMODE_EXCEPTION;
 		$options[PDO::ATTR_DEFAULT_FETCH_MODE] = PDO::FETCH_ASSOC;
-		parent::__construct($dsn, $username, $password, $options);
-		$this->setSchema($schema);
+		parent::__construct($config->getDsn(), $config->getUsername(), $config->getPassword(), $options);
+		if (($logger = $config->getLogger()) !== null) {
+			$this->setLogger($logger);
+		}
+		$this->setSchema($this->config->getSchema());
 	}
 
 	private function setSchema(?string $schema): void {
@@ -107,6 +107,7 @@ class Connection extends PDO {
 	 *                               property names will be fetched.
 	 * @return T The first instance of Entity
 	 * @throws RecordNotFoundException If the record is not found.
+	 * @noinspection PhpDocSignatureInspection
 	 */
 	public function fetchSingle(PDOStatement $statement, string $classname, array|bool $deepFetch = true): Entity {
 		return $this->fetchOneRecord($statement, $classname, true, $deepFetch);
@@ -121,6 +122,7 @@ class Connection extends PDO {
 	 *                               objects, 'false' none and with an array only the objects linked to the included
 	 *                               property names will be fetched.
 	 * @return T|null Null if the query did not return any records, the first instance of Entity otherwise.
+	 * @noinspection PhpDocSignatureInspection
 	 */
 	public function fetchFirst(PDOStatement $statement, string $classname, array|bool $deepFetch = true): ?Entity {
 		return $this->fetchOneRecord($statement, $classname, false, $deepFetch);
@@ -143,6 +145,7 @@ class Connection extends PDO {
 	 *                                objects, 'false' none and with an array only the objects linked to the included
 	 *                                property names will be fetched.
 	 * @return T|null
+	 * @noinspection PhpDocSignatureInspection
 	 */
 
 	private function fetchOneRecord(PDOStatement $statement, string $classname, bool $strict, array|bool $deepFetch = true): ?Entity {

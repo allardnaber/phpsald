@@ -147,7 +147,7 @@ class Entity implements JsonSerializable {
 	/**
 	 * Updates the current, already existing, entity in the database.
 	 * @param Configuration|null $config Configuration to get a specific connection, use default connection if omitted.
-	 * @return bool True if the update statement was executed successfully, or if no there were no pending changes..
+	 * @return bool True if the update statement was executed successfully, or if no there were no pending changes.
 	 */
 	public function update(?Configuration $config = null): bool {
 		if (empty($this->getDirtyFields())) {

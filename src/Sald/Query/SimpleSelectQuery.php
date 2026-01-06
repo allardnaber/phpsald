@@ -136,6 +136,7 @@ class SimpleSelectQuery extends AbstractQuery {
 	 *                               objects, 'false' none and with an array only the objects linked to the included
 	 *                               property names will be fetched.
 	 * @return T
+	 * @noinspection PhpDocSignatureInspection
 	 */
 	public function fetchSingle(array|bool $deepFetch = true): Entity {
 		$stmt = $this->executeAndGetStatement();
@@ -149,6 +150,7 @@ class SimpleSelectQuery extends AbstractQuery {
 	 *                               objects, 'false' none and with an array only the objects linked to the included
 	 *                               property names will be fetched.
 	 * @return T|null Null if the query did not return any records, the first instance of Entity otherwise.
+	 * @noinspection PhpDocSignatureInspection
 	 */
 	public function fetchFirst(array|bool $deepFetch = true): ?Entity {
 		$stmt = $this->executeAndGetStatement();
