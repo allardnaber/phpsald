@@ -7,7 +7,6 @@ use PDOException;
 use PDOStatement;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
-use Psr\Log\LoggerInterface;
 use Sald\Entities\Entity;
 use Sald\Entities\Mapper\ResultMapper;
 use Sald\Exception\Converter\DbErrorHandler;
@@ -19,24 +18,20 @@ use Sald\Query\SimpleDeleteQuery;
 use Sald\Query\SimpleInsertQuery;
 use Sald\Query\SimpleSelectQuery;
 use Sald\Query\SimpleUpdateQuery;
-use SensitiveParameter;
 
 class Connection extends PDO implements LoggerAwareInterface {
 
 	use LoggerAwareTrait;
 
-	public function __construct(
-		string                        $dsn,
-		?string                       $username = null,
-		#[SensitiveParameter] ?string $password = null,
-		?array $options = null,
-		?string $schema = null
-	) {
-		$options = $options ?? [];
+	public function __construct(private readonly Configuration $config) {
+		$options = $config->getOptions();
 		$options[PDO::ATTR_ERRMODE] = PDO::ERRMODE_EXCEPTION;
 		$options[PDO::ATTR_DEFAULT_FETCH_MODE] = PDO::FETCH_ASSOC;
-		parent::__construct($dsn, $username, $password, $options);
-		$this->setSchema($schema);
+		parent::__construct($config->getDsn(), $config->getUsername(), $config->getPassword(), $options);
+		if (($logger = $config->getLogger()) !== null) {
+			$this->setLogger($logger);
+		}
+		$this->setSchema($this->config->getSchema());
 	}
 
 	private function setSchema(?string $schema): void {

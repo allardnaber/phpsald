@@ -2,28 +2,14 @@
 
 namespace Sald\Connection\MultiHost;
 
+use Sald\Connection\Configuration;
 use Sald\Connection\Connection;
 
 class MultiHostConnection extends Connection {
 
-	private function __construct(
-		string  $dsn,
-		?string $username = null,
-		?string $password = null,
-		?array  $options = null,
-	) {
-		parent::__construct($dsn, $username, $password, $options);
-	}
-
-	public static function create(
-		string  $dsn,
-		?string $username = null,
-		?string $password = null,
-		?array  $options = null,
-		?string $schema = null
-	): Connection {
+	public static function create(Configuration $config): Connection {
 		// @todo extend so it is possible to switch hosts mid request?
-		return (new MultiHostChooser($dsn, $username, $password, $options, $schema))->getConnection();
+		return (new MultiHostChooser($config))->getConnection();
 		//return new MultiHostConnection($chooser, $username, $password, $options);
 	}
 
