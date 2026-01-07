@@ -25,8 +25,9 @@ class Dsn implements Stringable {
 			throw new SaldPDOException(sprintf('Database driver is missing from dsn %s.', $dsn));
 		}
 		foreach(explode(';', $dsnDetails) as $dsnPart) {
-			list ($k, $v) = explode('=', $dsnPart, 2);
-			$this->dsnParts[$k] = $v;
+			if (empty(trim($dsnPart))) continue;
+			$definition = explode('=', $dsnPart, 2);
+			$this->dsnParts[$definition[0]] = $definition[1] ?? true;
 		}
 
 		$this->isMultiHost = $this->calculateMultiHost();
