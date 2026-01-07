@@ -109,4 +109,15 @@ class Configuration {
 		$this->parsedDsn = clone $this->parsedDsn;
 		$this->options = isset($this->options) ? clone $this->options : [];
 	}
+
+	/**
+	 * Hides password from debug view
+	 * @return array|null
+	 */
+	public function __debugInfo(): ?array {
+		$result = get_object_vars($this);
+		$result['password'] = '*** REMOVED ***';
+		return $result;
+	}
+
 }
