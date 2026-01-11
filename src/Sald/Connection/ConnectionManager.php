@@ -46,7 +46,8 @@ class ConnectionManager {
 	private static function createConnection(Configuration $config): Connection {
 		try {
 			if ($config->getDsn()->isMultiHost()) {
-				$config->getLogger()?->debug(sprintf('Using multi host chooser for DSN %s.', $config->getDsn()));
+				$config->getLogger()?->debug(sprintf('Using multi host chooser for DSN %s (type: %s).',
+					$config->getDsn(), $config->getDsn()->getTargetServerType()->value));
 				return MultiHostConnection::create($config);
 			} else {
 				return new Connection($config);
