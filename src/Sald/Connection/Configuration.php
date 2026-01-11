@@ -23,8 +23,11 @@ class Configuration {
 	 */
 	private int $hostCheckTimeout;
 
+
+	private int $hostStatusTtl = 60;
+
 	private static array $requiredConfig = [ 'dsn', 'username', 'password' ];
-	private static array $allowedConfig =  [ 'dsn', 'username', 'password', 'options', 'schema', 'logger', 'hostCheckTimeout' ];
+	private static array $allowedConfig =  [ 'dsn', 'username', 'password', 'options', 'schema', 'logger', 'hostCheckTimeout', 'hostStatusTtl' ];
 
 	private static array $checksumElements = ['dsn', 'username', 'password', 'options', 'schema'];
 
@@ -103,6 +106,10 @@ class Configuration {
 
 	public function setHostCheckTimeout(int $hostCheckTimeout): void {
 		$this->hostCheckTimeout = $hostCheckTimeout;
+	}
+
+	public function getHostStatusTtl(): int {
+		return $this->hostStatusTtl;
 	}
 
 	public function __clone() {

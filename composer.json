@@ -15,6 +15,9 @@
     "php": ">=8.3",
     "ext-pdo": "*"
   },
+  "suggest": {
+	"ext-apcu": "*"
+  },
   "autoload": {
     "psr-4": {
       "Sald\\": "src/Sald/"

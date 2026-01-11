@@ -14,9 +14,11 @@ class MultiHostChooser {
 
 	private const int DEFAULT_HOST_CHECK_CONNECT_TIMEOUT = 2;
 	private ?LoggerInterface $logger;
+	private HostCache $cache;
 
 	public function __construct(private readonly Configuration $config) {
 		$this->logger = $config->getLogger() ?? null;
+		$this->cache = new HostCache($config->getHostStatusTtl());
 	}
 
 	public function getConnection(): Connection {
@@ -24,6 +26,11 @@ class MultiHostChooser {
 	}
 
 	private function selectHost(): Connection {
+		$cached = $this->cache->getHostForConfiguration($this->config->getChecksum());
+
+		if ($cached !== null) {
+			die("CACHED!!");
+		}
 		// @todo store hosts status to prevent rechecking on every request
 		$basePort = $this->config->getDsn()->getElement(Dsn::ELEM_PORT) ?? Dsn::DEFAULT_PORT;
 
@@ -52,6 +59,7 @@ class MultiHostChooser {
 			}
 			if ($targetServerType === TargetServerType::ANY) {
 				$this->logger?->debug(sprintf('Using %s, as any server type is allowed.', $trialConfig->getDsn()));
+				$this->cache->saveHostForConfiguration($this->config->getChecksum(), $trialConfig->getDsn());
 				return $test;
 			}
 
@@ -61,6 +69,7 @@ class MultiHostChooser {
 				// writable (= primary)
 				if (in_array($targetServerType, [TargetServerType::PRIMARY, TargetServerType::PREFER_PRIMARY])) {
 					$this->logger?->info(sprintf('Using primary host %s.', $trialConfig->getDsn()));
+					$this->cache->saveHostForConfiguration($this->config->getChecksum(), $trialConfig->getDsn());
 					return $test;
 				} elseif ($targetServerType === TargetServerType::PREFER_SECONDARY) {
 					$this->logger?->debug(sprintf('Keeping primary %s as one of the suitable connections.', $trialConfig->getDsn()));
@@ -71,6 +80,7 @@ class MultiHostChooser {
 				// secondary
 				if (in_array($targetServerType, [TargetServerType::SECONDARY, TargetServerType::PREFER_SECONDARY])) {
 					$this->logger?->info(sprintf('Using secondary host %s.', $trialConfig->getDsn()));
+					$this->cache->saveHostForConfiguration($this->config->getChecksum(), $trialConfig->getDsn());
 					return $test;
 				} elseif ($targetServerType === TargetServerType::PREFER_PRIMARY) {
 					$this->logger?->debug(sprintf('Keeping secondary %s as one of the suitable connections.', $trialConfig->getDsn()));
@@ -81,6 +91,7 @@ class MultiHostChooser {
 
 		if (!empty($suitableConnections)) {
 			$this->logger?->info('Using the first suitable connection that was inspected earlier.');
+			//$this->cache->saveHostForConfiguration($this->config->getChecksum(), $suitableConnections[0]->);
 			return $suitableConnections[0];
 		}
 		throw new DbConnectionException(sprintf('No suitable database hosts are available for target type %s', $targetServerType->value));
