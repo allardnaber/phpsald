@@ -12,89 +12,157 @@ use Sald\Exception\Db\Connection\DbConnectionException;
 
 class MultiHostChooser {
 
+	private const string NO_CONNECTIONS_CACHE_VALUE = '*no connection*';
 	private const int DEFAULT_HOST_CHECK_CONNECT_TIMEOUT = 2;
+	private const int DEFAULT_SERVER_STATUS_TTL = 60;
 	private ?LoggerInterface $logger;
 	private HostCache $cache;
 
+	/**
+	 * @var ServerStatus[]
+	 */
+	private array $serverStatuses = [];
+
+	/**
+	 * Additional connections, used to fallback in case of PREFER_PRIMARY or PREFER_SECONDARY and no primary or
+	 * secondary connection is available.
+	 * @var Connection[]
+	 */
+	private array $connections = [];
+
+	private ?Connection $cachedConnection = null;
+
 	public function __construct(private readonly Configuration $config) {
 		$this->logger = $config->getLogger() ?? null;
-		$this->cache = new HostCache($config->getHostStatusTtl());
+		$this->initFromCache();
 	}
 
 	public function getConnection(): Connection {
-		return $this->selectHost();
+		$connection = $this->cachedConnection !== null ? $this->cachedConnection : $this->selectHost();
+		if ($connection !== null) return $connection;
+
+		throw new DbConnectionException(sprintf(
+			'No suitable database hosts are available for target type %s',
+			$this->config->getDsn()->getTargetServerType()->value)
+		);
 	}
 
-	private function selectHost(): Connection {
-		$cached = $this->cache->getHostForConfiguration($this->config->getChecksum());
-
-		if ($cached !== null) {
-			die("CACHED!!");
-		}
-		// @todo store hosts status to prevent rechecking on every request
-		$basePort = $this->config->getDsn()->getElement(Dsn::ELEM_PORT) ?? Dsn::DEFAULT_PORT;
-
-		$testOptions = $this->config->getOptions();
-		$testOptions[PDO::ATTR_TIMEOUT] = $this->config->getHostCheckTimeout() ?? self::DEFAULT_HOST_CHECK_CONNECT_TIMEOUT;
-
-		$hosts = explode(',', $this->config->getDsn()->getElement(Dsn::ELEM_HOST));
-
+	private function selectHost(): ?Connection {
+		$testTimeout = $this->config->getHostCheckTimeout() ?? self::DEFAULT_HOST_CHECK_CONNECT_TIMEOUT;
 		$targetServerType = $this->config->getDsn()->getTargetServerType();
-		$suitableConnections = [];
+
+		$basePort = $this->config->getDsn()->getElement(Dsn::ELEM_PORT) ?? Dsn::DEFAULT_PORT;
+		$hosts = explode(',', $this->config->getDsn()->getElement(Dsn::ELEM_HOST));
 
 		$this->logger?->debug(sprintf('Selecting 1 (%s) host from %d hosts', $targetServerType->name, count($hosts)));
 		foreach ($hosts as $host) {
 			$hostParts = explode(':', $host, 2);
 
-			$trialConfig = clone $this->config;
-			$trialConfig->setOptions($testOptions);
-			$trialConfig->getDsn()->setElement(Dsn::ELEM_HOST, trim($hostParts[0]));
-			$trialConfig->getDsn()->setElement(Dsn::ELEM_PORT, trim($hostParts[1] ?? $basePort));
+			$dsn = clone $this->config->getDsn();
+			$dsn->setElement(Dsn::ELEM_HOST, trim($hostParts[0]));
+			$dsn->setElement(Dsn::ELEM_PORT, trim($hostParts[1] ?? $basePort));
 
-			try {
-				$test = new Connection($trialConfig);
-			} catch (PDOException $e) {
-				$this->logger?->info(sprintf('Connection to %s failed: %s', $trialConfig->getDsn(), $e->getMessage()));
-				continue;
-			}
+			$dsnString = (string) $dsn;
+			$connection = $this->createConnectionAndKeepStatus($dsnString, $testTimeout);
+			if ($connection === null) continue;
+
 			if ($targetServerType === TargetServerType::ANY) {
-				$this->logger?->debug(sprintf('Using %s, as any server type is allowed.', $trialConfig->getDsn()));
-				$this->cache->saveHostForConfiguration($this->config->getChecksum(), $trialConfig->getDsn());
-				return $test;
+				$this->logger?->debug(sprintf('Using %s, as any server type is allowed.', $dsnString));
+				$this->cache->saveHostForConfiguration($this->config->getChecksum(), $dsnString);
+				return $connection;
 			}
 
-			$result = $test->query('show transaction_read_only', PDO::FETCH_ASSOC)->fetch();
-			if ($result['transaction_read_only'] === 'off') {
-				$this->logger?->debug(sprintf('Connection to %s fully operational (primary).', $trialConfig->getDsn()));
-				// writable (= primary)
+			$status = $this->serverStatuses[$dsnString];
+			if ($status === ServerStatus::PRIMARY) {
+				$this->logger?->debug(sprintf('Connection to %s fully operational (primary).', $dsnString));
 				if (in_array($targetServerType, [TargetServerType::PRIMARY, TargetServerType::PREFER_PRIMARY])) {
-					$this->logger?->info(sprintf('Using primary host %s.', $trialConfig->getDsn()));
-					$this->cache->saveHostForConfiguration($this->config->getChecksum(), $trialConfig->getDsn());
-					return $test;
+					$this->logger?->info(sprintf('Using primary host %s.', $dsnString));
+					$this->cache->saveHostForConfiguration($this->config->getChecksum(), $dsnString);
+					return $connection;
 				} elseif ($targetServerType === TargetServerType::PREFER_SECONDARY) {
-					$this->logger?->debug(sprintf('Keeping primary %s as one of the suitable connections.', $trialConfig->getDsn()));
-					$suitableConnections[] = $test;
+					$this->connections[$dsnString] = $connection;
+					$this->logger?->debug(sprintf('Skipping primary %s for now as secondary is preferred.', $dsnString));
 				}
-			} else {
-				$this->logger?->info(sprintf('Connection to %s is in readonly mode (secondary).', $trialConfig->getDsn()));
-				// secondary
+			} else { // ServerStatus::SECONDARY
+				$this->logger?->info(sprintf('Connection to %s is in readonly mode (secondary).', $dsnString));
 				if (in_array($targetServerType, [TargetServerType::SECONDARY, TargetServerType::PREFER_SECONDARY])) {
-					$this->logger?->info(sprintf('Using secondary host %s.', $trialConfig->getDsn()));
-					$this->cache->saveHostForConfiguration($this->config->getChecksum(), $trialConfig->getDsn());
-					return $test;
+					$this->logger?->info(sprintf('Using secondary host %s.', $dsnString));
+					$this->cache->saveHostForConfiguration($this->config->getChecksum(), $dsnString);
+					return $connection;
 				} elseif ($targetServerType === TargetServerType::PREFER_PRIMARY) {
-					$this->logger?->debug(sprintf('Keeping secondary %s as one of the suitable connections.', $trialConfig->getDsn()));
-					$suitableConnections[] = $test;
+					$this->connections[$dsnString] = $connection;
+					$this->logger?->debug(sprintf('Skipping secondary %s for now as primary is preferred.', $dsnString));
 				}
 			}
 		}
 
-		if (!empty($suitableConnections)) {
-			$this->logger?->info('Using the first suitable connection that was inspected earlier.');
-			//$this->cache->saveHostForConfiguration($this->config->getChecksum(), $suitableConnections[0]->);
-			return $suitableConnections[0];
+		if (in_array($targetServerType, [TargetServerType::PREFER_PRIMARY, TargetServerType::PREFER_SECONDARY])) {
+			foreach ($this->serverStatuses as $dsnString => $status) {
+				if (
+					($status === ServerStatus::PRIMARY && $targetServerType === TargetServerType::PREFER_SECONDARY) ||
+					($status === ServerStatus::SECONDARY && $targetServerType === TargetServerType::PREFER_PRIMARY)
+				) {
+					$this->logger?->info(sprintf('Falling back to %s host %s.', $status->name, $dsnString));
+					$this->cache->saveHostForConfiguration($this->config->getChecksum(), $dsnString);
+					$result = $this->connections[$dsnString];
+					$this->connections = [];
+					return $result;
+				}
+			}
 		}
-		throw new DbConnectionException(sprintf('No suitable database hosts are available for target type %s', $targetServerType->value));
+
+		// @todo also cache connection unavailability?
+		//$this->cache->saveHostForConfiguration($this->config->getChecksum(), self::NO_CONNECTIONS_CACHE_VALUE);
+		$this->noConnectionAvailable();
+	}
+
+	private function initFromCache(): void {
+		$this->cache = new HostCache($this->config->getHostStatusTtl() ?? self::DEFAULT_SERVER_STATUS_TTL);
+		$cachedDsn = $this->cache->getHostForConfiguration($this->config->getChecksum());
+		if ($cachedDsn === null) return;
+		if ($cachedDsn === self::NO_CONNECTIONS_CACHE_VALUE) $this->noConnectionAvailable();
+
+		$this->cachedConnection = $this->createConnectionAndKeepStatus($cachedDsn);
+		if ($this->cachedConnection === null) {
+			$this->cache->deleteHostForConfiguration($this->config->getChecksum());
+		} else {
+			$this->logger?->info(sprintf('Retrieved connection %s from cache.', $cachedDsn));
+		}
+	}
+
+	private function createConnectionAndKeepStatus(string $dsn, ?int $timeout = null): ?Connection {
+		$connConfig = clone $this->config;
+		$connConfig->setDsn($dsn);
+		if ($timeout !== null) {
+			$options = $connConfig->getOptions();
+			$options[PDO::ATTR_TIMEOUT] = $timeout;
+			$connConfig->setOptions($options);
+		}
+		try {
+			$result = new Connection($connConfig);
+			$this->serverStatuses[$dsn] = $this->fetchServerStatus($result);
+			return $result;
+		} catch (PDOException $e) {
+			$this->serverStatuses[$dsn] = ServerStatus::UNAVAILABLE;
+			$this->logger?->info(sprintf('Connection to %s unavailable: %s', $connConfig->getDsn(), $e->getMessage()));
+			return null;
+		}
+	}
+
+	private function fetchServerStatus(Connection $connection): ServerStatus {
+		$result = $connection->query('show transaction_read_only', PDO::FETCH_ASSOC)->fetch();
+		return $result['transaction_read_only'] === 'off' ? ServerStatus::PRIMARY : ServerStatus::SECONDARY;
+	}
+
+	/**
+	 * Throws an exception if no suitable connection could be found, potentially also if it came from cache;
+	 * @return void
+	 */
+	private function noConnectionAvailable(): void {
+		throw new DbConnectionException(sprintf(
+				'No suitable database hosts are available for target type %s',
+				$this->config->getDsn()->getTargetServerType()->value)
+		);
 	}
 
 }
