@@ -16,7 +16,7 @@
     "ext-pdo": "*"
   },
   "suggest": {
-	"ext-apcu": "*"
+	"ext-apcu": "In case of multihost PostgreSQL connections, the APCu cache limits the times the hosts statuses are checked."
   },
   "autoload": {
     "psr-4": {
