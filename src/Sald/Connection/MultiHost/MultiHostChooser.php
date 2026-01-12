@@ -110,7 +110,7 @@ class MultiHostChooser {
 		if ($this->cachedConnection === null) {
 			$this->cache->deleteHostForConfiguration($this->config->getChecksum());
 		} else {
-			$this->logger?->info(sprintf('Retrieved connection %s from cache.', $cachedDsn));
+			$this->logger?->debug(sprintf('Retrieved connection %s from cache.', $cachedDsn));
 		}
 	}
 
