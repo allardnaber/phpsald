@@ -23,8 +23,11 @@ class Configuration {
 	 */
 	private int $hostCheckTimeout;
 
+
+	private ?int $hostStatusTtl = null;
+
 	private static array $requiredConfig = [ 'dsn', 'username', 'password' ];
-	private static array $allowedConfig =  [ 'dsn', 'username', 'password', 'options', 'schema', 'logger', 'hostCheckTimeout' ];
+	private static array $allowedConfig =  [ 'dsn', 'username', 'password', 'options', 'schema', 'logger', 'hostCheckTimeout', 'hostStatusTtl' ];
 
 	private static array $checksumElements = ['dsn', 'username', 'password', 'options', 'schema'];
 
@@ -42,11 +45,15 @@ class Configuration {
 			}
 		}
 
-		$this->parsedDsn = new Dsn($config['dsn']);
+		$this->setDsn($config['dsn']);
 	}
 
 	public function getDsn(): Dsn {
 		return $this->parsedDsn;
+	}
+
+	public function setDsn(string $value): void {
+		$this->parsedDsn = new Dsn($value);
 	}
 
 	public function getRawDsn(): string {
@@ -105,8 +112,27 @@ class Configuration {
 		$this->hostCheckTimeout = $hostCheckTimeout;
 	}
 
+	public function setHostStatusTtl(?int $hostStatusTtl): void {
+		$this->hostStatusTtl = $hostStatusTtl;
+	}
+
+	public function getHostStatusTtl(): ?int {
+		return $this->hostStatusTtl;
+	}
+
 	public function __clone() {
 		$this->parsedDsn = clone $this->parsedDsn;
 		$this->options = isset($this->options) ? clone $this->options : [];
 	}
+
+	/**
+	 * Hides password from debug view
+	 * @return array|null
+	 */
+	public function __debugInfo(): ?array {
+		$result = get_object_vars($this);
+		$result['password'] = '*** REMOVED ***';
+		return $result;
+	}
+
 }

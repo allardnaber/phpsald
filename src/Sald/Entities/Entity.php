@@ -55,7 +55,11 @@ class Entity implements JsonSerializable {
 
 		$reflection = new ReflectionClass(static::class);
 		foreach ($reflection->getProperties(ReflectionProperty::IS_PUBLIC) as $prop) {
-			unset($this->{$prop->getName()});
+			$name = $prop->getName();
+			if (isset($this->$name)) {
+				$this->__int_fields[$name] = $this->$name;
+			}
+			unset($this->$name);
 		}
 		$this->__int_connection = $connection;
 		$this->setFieldValues($fields);
