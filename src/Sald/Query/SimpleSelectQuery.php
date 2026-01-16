@@ -89,8 +89,8 @@ class SimpleSelectQuery extends AbstractQuery {
 		return sprintf('%s JOIN %s ON %s', $direction, $table, $condition);
 	}
 
-	private function buildOrderByClause(string $orderBy, OrderOptions $options): string {
-		return sprintf('%s %s', $orderBy, $options->getSql());
+	private function buildOrderByClause(string $orderBy, ?OrderOptions $options = null): string {
+		return sprintf('%s %s', $orderBy, $options?->getSql() ?? '');
 	}
 
 	private function getDistinctClause(): string {
