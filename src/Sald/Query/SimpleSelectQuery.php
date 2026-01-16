@@ -61,9 +61,8 @@ class SimpleSelectQuery extends AbstractQuery {
 		return $this;
 	}
 
-	public function orderBy(string $orderBy, OrderOptions $options): self {//|string  = 'ASC', bool $caseSensitive = false): self {
-
-		$this->orderBy[] = $this->buildOrderByClause($orderBy, $options);//$direction, $caseSensitive);
+	public function orderBy(string $orderBy, ?OrderOptions $options = null): self {
+		$this->orderBy[] = $this->buildOrderByClause($orderBy, $options);
 		$this->setDirty();
 		return $this;
 	}
