@@ -5,6 +5,7 @@ namespace Sald\Query;
 use PDOStatement;
 use RuntimeException;
 use Sald\Entities\Entity;
+use Sald\Query\Expression\OrderOptions;
 
 /**
  * @template T extends Entity
@@ -60,8 +61,9 @@ class SimpleSelectQuery extends AbstractQuery {
 		return $this;
 	}
 
-	public function orderBy(string $orderBy, string $direction = 'ASC', bool $caseSensitive = false): self {
-		$this->orderBy[] = $this->buildOrderByClause($orderBy, $direction, $caseSensitive);
+	public function orderBy(string $orderBy, OrderOptions $options): self {//|string  = 'ASC', bool $caseSensitive = false): self {
+
+		$this->orderBy[] = $this->buildOrderByClause($orderBy, $options);//$direction, $caseSensitive);
 		$this->setDirty();
 		return $this;
 	}
@@ -87,8 +89,8 @@ class SimpleSelectQuery extends AbstractQuery {
 		return sprintf('%s JOIN %s ON %s', $direction, $table, $condition);
 	}
 
-	private function buildOrderByClause(string $orderBy, string $direction, bool $caseSensitive): string {
-		return sprintf('%s%s %s', $orderBy, $caseSensitive ?  '' : '', $direction); // @TODO Case sensitive
+	private function buildOrderByClause(string $orderBy, OrderOptions $options): string {
+		return sprintf('%s %s', $orderBy, $options->getSql());
 	}
 
 	private function getDistinctClause(): string {
