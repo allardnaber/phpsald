@@ -21,8 +21,8 @@ readonly class OrderOptions {
 		return new self(caseInsensitive: true);
 	}
 
-	public static function LiteralInsensitive(): self {
-		return new self('C', caseInsensitive: false);
+	public static function LiteralCaseInsensitive(): self {
+		return new self('C', caseInsensitive: true);
 	}
 
 	public function getSql(): string {
