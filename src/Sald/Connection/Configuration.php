@@ -26,7 +26,7 @@ class Configuration {
 
 	private ?int $hostStatusTtl = null;
 
-	private static array $requiredConfig = [ 'dsn', 'username', 'password' ];
+	private static array $requiredConfig = [ 'dsn' ];
 	private static array $allowedConfig =  [ 'dsn', 'username', 'password', 'options', 'schema', 'logger', 'hostCheckTimeout', 'hostStatusTtl' ];
 
 	private static array $checksumElements = ['dsn', 'username', 'password', 'options', 'schema'];
