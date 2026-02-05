@@ -11,8 +11,8 @@ class Configuration {
 	private Dsn $parsedDsn;
 
 	private string $dsn;
-	private string $username;
-	private string $password;
+	private ?string $username;
+	private ?string $password;
 	private ?array $options;
 	private ?string $schema;
 
@@ -60,12 +60,12 @@ class Configuration {
 		return $this->dsn;
 	}
 
-	public function getUsername(): string {
-		return $this->username;
+	public function getUsername(): ?string {
+		return $this->username ?? null;
 	}
 
-	public function getPassword(): string {
-		return $this->password;
+	public function getPassword(): ?string {
+		return $this->password ?? null;
 	}
 
 	public function getOptions(): array {
