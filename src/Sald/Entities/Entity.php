@@ -139,6 +139,10 @@ class Entity implements JsonSerializable {
 		return $value instanceof Expression ? 'expr:{' . $value->getSQL() . '}' : $value;
 	}
 
+	public function __isset(string $name): bool {
+		return array_key_exists($name, $this->__int_fields) && $this->__int_fields[$name] !== null;
+	}
+
 	/**
 	 * Creates a select query to retrieve one or more instances if this entity.
 	 * @param Configuration|null $config Configuration to get a specific connection, use default connection if omitted.
