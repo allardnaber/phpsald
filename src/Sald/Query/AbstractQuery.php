@@ -8,6 +8,7 @@ use Sald\Connection\Connection;
 use Sald\Entities\Mapper\InputMapper;
 use Sald\Exception\IncompleteDataException;
 use Sald\Metadata\TableMetadata;
+use Sald\Query\Expression\ArrayComparator;
 use Sald\Query\Expression\Comparator;
 use Sald\Query\Expression\Condition;
 use Sald\Query\Expression\Expression;
@@ -103,6 +104,21 @@ abstract class AbstractQuery {
 			}
 			return $this;
 		}
+	}
+
+	public function whereArray(string $field, array $values, ArrayComparator $comparator = ArrayComparator::IN): self {
+		$this->setDirty();
+		$columnName = $this->tableMetadata->getColumn($field)?->getDbObjectName() ?? $field;
+
+		$placeholders = [];
+		foreach (array_values($values) as $idx => $value) {
+			$fieldName = $field . '_idx_' . $idx;
+			$this->parameter($fieldName, $value);
+			$placeholders[] = $this->parameters[$fieldName]->getPlaceholderName();
+		}
+
+		$this->addCondition(new Condition($columnName, $comparator, join(',', $placeholders)));
+		return $this;
 	}
 
 	protected function getWhereClause(): string {

@@ -102,7 +102,8 @@ abstract class ResultMapper {
 			->getDbObjectName();
 
 		$query = Sald::select($relation->getClassname())
-			->where($referencedColumnName, $referencedIds, Operator::ANY);
+			->whereArray($referencedColumnName, $referencedIds); // @todo limits for IN clause
+
 		if ($relation->getCondition() !== null) {
 			$query->addCondition($relation->getCondition());
 		}
