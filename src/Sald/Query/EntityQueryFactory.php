@@ -35,11 +35,12 @@ class EntityQueryFactory {
 		}
 
 		$columns = $metadata->getColumns();
-		$dbFields = array_filter($entity->getDirtyFields(), fn(string $field) => isset($columns[$field]) && $columns[$field]?->isEditable());
+		$dbFields = array_filter($entity->getDirtyFields(), fn(string $field) => isset($columns[$field]) && $columns[$field]->isEditable());
 
 		foreach ($dbFields as $field) {
+			if ($columns[$field]->getRelation() !== null) continue;
 			$expr = $entity->getExpression($field);
-			$baseQuery->set($columns[$field]?->getDbObjectName() ?? $field, $expr ?? $entity->$field);
+			$baseQuery->set($columns[$field]->getDbObjectName() ?? $field, $expr ?? $entity->$field);
 		}
 		return $baseQuery;
 	}
