@@ -2,12 +2,15 @@
 
 namespace Sald\Metadata;
 
+use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionProperty;
 use Sald\Attributes\Column;
 use Sald\Attributes\Id;
 use Sald\Attributes\OneToMany;
+use Sald\Attributes\OneToOne;
+use Sald\Attributes\RelationAttribute;
 use Sald\Attributes\Table;
 use Sald\Attributes\Transient;
 use Sald\Exception\ClassNotFoundException;
@@ -54,7 +57,7 @@ class MetadataManager {
 		ReflectionClass|ReflectionProperty $reflection,
 		string $attributeClassName
 	): ?object {
-		$attributes = $reflection->getAttributes($attributeClassName);
+		$attributes = $reflection->getAttributes($attributeClassName, ReflectionAttribute::IS_INSTANCEOF);
 		return empty($attributes) ? null : $attributes[0]->newInstance();
 	}
 
@@ -88,10 +91,11 @@ class MetadataManager {
 
 	private static function getColumn(ReflectionProperty $reflection): ColumnMetadata {
 		$result = new ColumnMetadata($reflection->getName(), $reflection->getType());
-		$relation = self::getFirstReflectionAttribute($reflection, OneToMany::class);
-		if ($relation instanceof OneToMany) {
-			$result->setOneToMany($relation);
+		$relation = self::getFirstReflectionAttribute($reflection, RelationAttribute::class);
+		if ($relation instanceof RelationAttribute) {
+			$result->setRelation($relation);
 		}
+
 		$idAttribute = self::getFirstReflectionAttribute($reflection, Id::class);
 		if ($idAttribute instanceof Id) {
 			$result->applyIdAttribute($idAttribute);

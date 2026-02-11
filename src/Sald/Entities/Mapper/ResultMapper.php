@@ -4,6 +4,7 @@ namespace Sald\Entities\Mapper;
 
 use PDO;
 use PDOStatement;
+use Sald\Attributes\OneToMany;
 use Sald\Connection\Connection;
 use Sald\Entities\Entity;
 use Sald\Metadata\ColumnMetadata;
@@ -110,12 +111,24 @@ abstract class ResultMapper {
 		if ($relation->getTableName() !== null) {
 			$query->overrideTableName($relation->getTableName());
 		}
+		if ($relation instanceof OneToMany && $relation->getOrderBy() !== null) {
+			$orderBy = is_array($relation->getOrderBy()) ? $relation->getOrderBy() : [ $relation->getOrderBy() ];
+			foreach ($orderBy as $orderField) {
+				$query->orderBy($orderField);
+			}
+		}
 
-		$referencedRecords = $query->fetchAll();
+		$referencedRecords = $query->fetchAll($relation->getDeepFetch());
 		Util::indexByField($referencedRecords, $relation->getReferences());
 
 		foreach ($records as $record) {
-			$record->__set_non_dirty($column->getRealObjectName(), array_values($referencedRecords[$record->$referencedIdColumn] ?? []));
+			$arrayValues = array_values($referencedRecords[$record->$referencedIdColumn] ?? []);
+			$record->__set_non_dirty(
+				$column->getRealObjectName(),
+				$relation instanceof OneToMany
+					? $arrayValues
+					: $arrayValues[0] ?? null
+			);
 		}
 
 	}
