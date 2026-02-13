@@ -18,7 +18,7 @@ use Sald\Exception\Db\System\DbSystemException;
 class PgsqlErrorConverter implements ErrorConverter {
 
 	// see https://www.postgresql.org/docs/current/errcodes-appendix.html
-	private const CONVERSION_TABLE = [
+	private const array CONVERSION_TABLE = [
 		5 => [
 			'42P01' => DbTableDoesNotExistException::class,
 			'42703' => DbColumnDoesNotExistException::class,

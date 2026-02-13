@@ -10,7 +10,8 @@ use Sald\Exception\Db\DbException;
 class DbErrorHandler {
 
 	private const DRIVER_CONVERTERS = [
-		'pgsql' => PgsqlErrorConverter::class
+		'pgsql' => PgsqlErrorConverter::class,
+		'sqlite' => SqliteErrorConverter::class
 	];
 
 	public static function getDbExceptionWithConnection(PDOException $e, Connection $connection): DbException {

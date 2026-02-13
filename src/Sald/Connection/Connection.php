@@ -78,6 +78,14 @@ class Connection extends PDO implements LoggerAwareInterface {
 		return MetadataManager::getTable($className);
 	}
 
+	public function prepare(string $query, array $options = []): PDOStatement|false {
+		try {
+			return parent::prepare($query, $options);
+		} catch (PDOException $e) {
+			throw DbErrorHandler::getDbExceptionWithConnection($e, $this);
+		}
+	}
+
 	/**
 	 * Returns all entities that the query returned.
 	 * @template T extends Entity
