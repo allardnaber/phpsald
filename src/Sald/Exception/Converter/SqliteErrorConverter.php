@@ -51,7 +51,6 @@ class SqliteErrorConverter implements ErrorConverter {
 	public function convert(PDOException $exception, ?string $sqlState = null, ?string $driverCode = null, ?string $driverMessage = null): DbException {
 		if ($sqlState === null) return DbException::fromException($exception);
 		$errorCode = (int) $driverCode;
-		print_r($sqlState);print_r($driverMessage);
 
 		if ($errorCode === 1 && str_contains(strtolower($driverMessage), 'no such table')) {
 			$type = DbTableDoesNotExistException::class;
