@@ -47,9 +47,9 @@ class RelationAttribute {
 	}
 
 	/**
-	 * @return Condition|null
+	 * @return Condition|Condition[]|null
 	 */
-	public function getCondition(): ?Condition {
+	public function getCondition(): Condition|array|null {
 		return $this->condition;
 	}
 
