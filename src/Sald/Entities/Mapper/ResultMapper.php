@@ -9,13 +9,14 @@ use Sald\Connection\Connection;
 use Sald\Entities\Entity;
 use Sald\Metadata\ColumnMetadata;
 use Sald\Metadata\MetadataManager;
+use Sald\Query\Expression\Condition;
 use Sald\Query\Expression\Operator;
 use Sald\Sald;
 use Sald\Util;
 
 abstract class ResultMapper {
 
-	private const RESULT_MAPPERS = [
+	private const array RESULT_MAPPERS = [
 		'pgsql' => PgsqlResultMapper::class
 	];
 
@@ -106,7 +107,8 @@ abstract class ResultMapper {
 			->whereArray($referencedColumnName, $referencedIds); // @todo limits for IN clause
 
 		if ($relation->getCondition() !== null) {
-			$query->addCondition($relation->getCondition());
+			$conditionList = is_array($relation->getCondition()) ? $relation->getCondition() : [ $relation->getCondition() ];
+			array_map(fn(Condition $c) => $query->addCondition($c), $conditionList);
 		}
 		if ($relation->getTableName() !== null) {
 			$query->overrideTableName($relation->getTableName());

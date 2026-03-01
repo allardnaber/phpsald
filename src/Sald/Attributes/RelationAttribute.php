@@ -6,11 +6,20 @@ use Sald\Query\Expression\Condition;
 
 class RelationAttribute {
 
+	/**
+	 * @param string $classname
+	 * @param string $referencedBy
+	 * @param string $references
+	 * @param Condition|Condition[]|null $condition
+	 * @param string|null $tableName
+	 * @param string|null $alias
+	 * @param bool $deepFetch
+	 */
 	public function __construct(
 		private readonly string $classname,
 		private readonly string $referencedBy,
 		private readonly string $references,
-		private readonly ?Condition $condition = null,
+		private readonly Condition|array|null $condition = null,
 		private readonly ?string $tableName = null,
 		private readonly ?string $alias = null,
 		private readonly bool $deepFetch = true
