@@ -89,8 +89,13 @@ class Entity implements JsonSerializable {
 		$columns = MetadataManager::getTable(static::class)?->getColumns() ?? [];
 		foreach ($columns as $column) {
 			if (isset($fields[$column->getDbObjectName()])) {
-				$this->__int_fields[$column->getRealObjectName()] = $fields[$column->getDbObjectName()];
-				//unset ($fields[$column->getColumnName()]);
+				if (enum_exists($column->getRealObjectType())) {
+					$this->__int_fields[$column->getRealObjectName()] =
+						self::mapEnumValue($column->getRealObjectType(), $fields[$column->getDbObjectName()]);
+				} else {
+					$this->__int_fields[$column->getRealObjectName()] = $fields[$column->getDbObjectName()];
+					//unset ($fields[$column->getColumnName()]);
+				}
 			}
 		}
 
@@ -235,6 +240,10 @@ class Entity implements JsonSerializable {
 			fn(string $fieldName) => isset(self::$jsonSerializableFields[static::class][$fieldName]),
 			ARRAY_FILTER_USE_KEY
 		);
+	}
+
+	private static function mapEnumValue(string $enumType, string $value): \UnitEnum {
+		return $enumType::{$value};
 	}
 
 	private static function collectJsonSerializableFields(): void {
