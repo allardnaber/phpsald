@@ -37,7 +37,7 @@ class Connection extends PDO implements LoggerAwareInterface {
 	private function setSchema(?string $schema): void {
 		if ($schema !== null) {
 			$stmt = $this->prepare(sprintf('SET search_path to "%s"', addslashes($schema)));
-			$stmt->execute([$schema]);
+			$stmt->execute();
 		}
 	}
 
