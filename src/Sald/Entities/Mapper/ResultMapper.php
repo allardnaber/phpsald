@@ -4,17 +4,19 @@ namespace Sald\Entities\Mapper;
 
 use PDO;
 use PDOStatement;
+use Sald\Attributes\OneToMany;
 use Sald\Connection\Connection;
 use Sald\Entities\Entity;
 use Sald\Metadata\ColumnMetadata;
 use Sald\Metadata\MetadataManager;
+use Sald\Query\Expression\Condition;
 use Sald\Query\Expression\Operator;
 use Sald\Sald;
 use Sald\Util;
 
 abstract class ResultMapper {
 
-	private const RESULT_MAPPERS = [
+	private const array RESULT_MAPPERS = [
 		'pgsql' => PgsqlResultMapper::class
 	];
 
@@ -102,19 +104,33 @@ abstract class ResultMapper {
 			->getDbObjectName();
 
 		$query = Sald::select($relation->getClassname())
-			->where($referencedColumnName, $referencedIds, Operator::ANY);
+			->whereArray($referencedColumnName, $referencedIds); // @todo limits for IN clause
+
 		if ($relation->getCondition() !== null) {
-			$query->addCondition($relation->getCondition());
+			$conditionList = is_array($relation->getCondition()) ? $relation->getCondition() : [ $relation->getCondition() ];
+			array_map(fn(Condition $c) => $query->addCondition($c), $conditionList);
 		}
 		if ($relation->getTableName() !== null) {
 			$query->overrideTableName($relation->getTableName());
 		}
+		if ($relation instanceof OneToMany && $relation->getOrderBy() !== null) {
+			$orderBy = is_array($relation->getOrderBy()) ? $relation->getOrderBy() : [ $relation->getOrderBy() ];
+			foreach ($orderBy as $orderField) {
+				$query->orderBy($orderField);
+			}
+		}
 
-		$referencedRecords = $query->fetchAll();
+		$referencedRecords = $query->fetchAll($relation->getDeepFetch());
 		Util::indexByField($referencedRecords, $relation->getReferences());
 
 		foreach ($records as $record) {
-			$record->__set_non_dirty($column->getRealObjectName(), array_values($referencedRecords[$record->$referencedIdColumn] ?? []));
+			$arrayValues = array_values($referencedRecords[$record->$referencedIdColumn] ?? []);
+			$record->__set_non_dirty(
+				$column->getRealObjectName(),
+				$relation instanceof OneToMany
+					? $arrayValues
+					: $arrayValues[0] ?? null
+			);
 		}
 
 	}

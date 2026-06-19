@@ -7,15 +7,7 @@ use Sald\Query\Expression\Expression;
 class SimpleUpdateQuery extends AbstractMutatingQuery {
 
 	protected function buildQuery(): string {
-		$updateFields = [];
-
-		foreach ($this->getMutations() as $mutation) {
-			if ($mutation->getValue() instanceof Expression) {
-				$updateFields[] = sprintf('%s=(%s)', $mutation->getColumnName(), $mutation->getValue()->getExpression());
-			} else {
-				$updateFields[] = sprintf('%s=%s', $mutation->getColumnName(), $mutation->getPlaceholderName());
-			}
-		}
+		$updateFields = array_map(fn(QueryParameter $m) => $this->getMutationSql($m), $this->getMutations());
 
 		return join(' ', [
 			'UPDATE',
@@ -24,6 +16,14 @@ class SimpleUpdateQuery extends AbstractMutatingQuery {
 			join(', ', $updateFields),
 			$this->getWhereClause()
 		]);
+	}
+
+	protected function getMutationSql(QueryParameter $mutation): string {
+		if ($mutation->getValue() instanceof Expression) {
+			return sprintf('%s=(%s)', $mutation->getColumnName(), $mutation->getValue()->getExpression());
+		} else {
+			return sprintf('%s=%s', $mutation->getColumnName(), $mutation->getPlaceholderName());
+		}
 	}
 
 	public function execute(): bool {

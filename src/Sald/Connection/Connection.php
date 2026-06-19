@@ -36,7 +36,7 @@ class Connection extends PDO implements LoggerAwareInterface {
 
 	private function setSchema(?string $schema): void {
 		if ($schema !== null) {
-			$stmt = $this->prepare(sprintf('SET search_path to %s', $schema));
+			$stmt = $this->prepare(sprintf('SET search_path to "%s"', addslashes($schema)));
 			$stmt->execute();
 		}
 	}
@@ -76,6 +76,14 @@ class Connection extends PDO implements LoggerAwareInterface {
 
 	private function getMetadata(string $className): TableMetadata {
 		return MetadataManager::getTable($className);
+	}
+
+	public function prepare(string $query, array $options = []): PDOStatement|false {
+		try {
+			return parent::prepare($query, $options);
+		} catch (PDOException $e) {
+			throw DbErrorHandler::getDbExceptionWithConnection($e, $this);
+		}
 	}
 
 	/**

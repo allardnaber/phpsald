@@ -23,8 +23,8 @@ class Sald {
 	 * to connect if no configuration was specified and no connection is available yet.
 	 * @param array{
 	 *     dsn: string,
-	 *     username: string,
-	 *     password: string,
+	 *     username: ?string,
+	 *     password: ?string,
 	 *     options?: ?array,
 	 *     schema?: ?string,
 	 *     logger?: ?LoggerInterface,

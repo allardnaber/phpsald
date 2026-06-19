@@ -2,6 +2,8 @@
 
 namespace Sald\Query;
 
+use Sald\Exception\SaldPDOException;
+
 abstract class AbstractMutatingQuery extends AbstractQuery {
 
 	/**
@@ -9,17 +11,26 @@ abstract class AbstractMutatingQuery extends AbstractQuery {
 	 */
 	private array $mutations = [];
 
+	private \PDOStatement $stmt;
+
 	public function set(string $key, mixed $value): self {
 		$this->mutations[] = new QueryParameter($key, $value, 'write');
 		return $this;
 	}
 
 	public function execute(): bool {
-		$stmt = $this->connection->prepare($this->getSQL());
-		$this->bindValues($stmt);
-		$this->bindValuesFromQueryParams($stmt, $this->mutations);
+		$this->stmt = $this->connection->prepare($this->getSQL());
+		$this->bindValues($this->stmt);
+		$this->bindValuesFromQueryParams($this->stmt, $this->mutations);
 
-		return $this->connection->execute($stmt);
+		return $this->connection->execute($this->stmt);
+	}
+
+	public function getRowCount(): int {
+		if (!isset($this->stmt)) {
+			throw new SaldPDOException('Row count is only available after executing query');
+		}
+		return $this->stmt->rowCount();
 	}
 
 	/**

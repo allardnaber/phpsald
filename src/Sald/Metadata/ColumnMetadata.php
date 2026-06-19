@@ -5,6 +5,7 @@ namespace Sald\Metadata;
 use Sald\Attributes\Column;
 use Sald\Attributes\Id;
 use Sald\Attributes\OneToMany;
+use Sald\Attributes\RelationAttribute;
 
 class ColumnMetadata extends AbstractMetadata {
 
@@ -56,11 +57,11 @@ class ColumnMetadata extends AbstractMetadata {
 		return !$this->isAutoIncrement();
 	}
 
-	public function setOneToMany(OneToMany $relation): void {
+	public function setRelation(RelationAttribute $relation): void {
 		$this->relation = $relation;
 	}
 
-	public function getRelation(): OneToMany|null {
+	public function getRelation(): RelationAttribute|null {
 		return $this->relation;
 	}
 }

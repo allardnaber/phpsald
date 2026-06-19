@@ -27,7 +27,7 @@ class Dsn implements Stringable {
 		foreach(explode(';', $dsnDetails) as $dsnPart) {
 			if (empty(trim($dsnPart))) continue;
 			$definition = explode('=', $dsnPart, 2);
-			$this->dsnParts[$definition[0]] = $definition[1] ?? true;
+			$this->dsnParts[$definition[0]] = $definition[1] ?? null;
 		}
 
 		$this->isMultiHost = $this->calculateMultiHost();
@@ -78,7 +78,7 @@ class Dsn implements Stringable {
 		return sprintf('%s:%s',
 			$this->driver,
 			join(';', array_map(
-				fn ($v, $k) => $k . '=' . $v,
+				fn ($v, $k) => $k . ($v === null ? '' : '=' . $v),
 				$this->dsnParts,
 				array_keys($this->dsnParts)
 			)));
