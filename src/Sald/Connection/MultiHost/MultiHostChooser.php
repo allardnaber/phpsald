@@ -163,7 +163,7 @@ class MultiHostChooser {
 			$connConfig->setOptions($options);
 		}
 		try {
-			$result = new Connection($connConfig);
+			$result = new Connection($connConfig, $this->config->getChecksum());
 			$status =$this->fetchServerStatus($result);
 			$this->serverStatuses[$dsn] = $status;
 			if ($this->isServerStatusSuitable($status)) {

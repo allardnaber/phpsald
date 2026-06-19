@@ -3,12 +3,15 @@
 namespace Sald\Connection;
 
 use PDOException;
+use Sald\Connection\MultiHost\HostCache;
 use Sald\Connection\MultiHost\MultiHostConnection;
 use Sald\Exception\AmbiguousConnectionException;
 use Sald\Exception\Converter\DbErrorHandler;
 use Sald\Exception\NoConnectionException;
 
 class ConnectionManager {
+
+	private const int RECONNECT_THRESHOLD = 60; // if a connection is closed within a minute, don't automatically reconnect.
 
 	/**
 	 * @var Connection[]
@@ -35,6 +38,29 @@ class ConnectionManager {
 			self::$connectionMap[$config->getChecksum()] = self::createConnection($config);
 		}
 		return self::$connectionMap[$config->getChecksum()];
+	}
+
+	/**
+	 * Invalidates the current connection, e.g. if the connection was closed server side and, if possible, return
+	 * a fresh connection.
+	 * @param Connection $c
+	 * @return Connection|null
+	 */
+	public static function invalidateAndReconnect(Connection $c): ?Connection {
+		// invalidate
+		$checksum = $c->getConfigChecksum();
+		if (isset(self::$connectionMap[$checksum])) {
+			unset(self::$connectionMap[$checksum]);
+		}
+		(new HostCache())->deleteHostForConfiguration($checksum);
+
+		// reconnect for older connections, for new connections this is most likely not the solution.
+		if (time() - $c->getCreated() < self::RECONNECT_THRESHOLD) return null;
+
+		$origConfig = ConfigurationManager::getConfiguration($checksum);
+		if ($origConfig === null) return null;
+
+		return ConnectionManager::get($origConfig);
 	}
 
 	/**

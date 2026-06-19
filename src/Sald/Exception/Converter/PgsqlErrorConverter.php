@@ -3,6 +3,7 @@
 namespace Sald\Exception\Converter;
 
 use PDOException;
+use Sald\Exception\Db\Connection\DbConnectionClosedException;
 use Sald\Exception\Db\Connection\DbConnectionException;
 use Sald\Exception\Db\Connection\DbDatabaseDoesNotExistException;
 use Sald\Exception\Db\Data\DbColumnDoesNotExistException;
@@ -20,6 +21,7 @@ class PgsqlErrorConverter implements ErrorConverter {
 	// see https://www.postgresql.org/docs/current/errcodes-appendix.html
 	private const array CONVERSION_TABLE = [
 		5 => [
+			'HY000' => self::class,
 			'42P01' => DbTableDoesNotExistException::class,
 			'42703' => DbColumnDoesNotExistException::class,
 			'42501' => DbInsufficientPermissionsException::class,
@@ -53,5 +55,13 @@ class PgsqlErrorConverter implements ErrorConverter {
 			}
 		}
 		return DbException::fromException($exception);
+	}
+
+	// For generic HY000 errors
+	public function fromException(PDOException $exception): DbException {
+		// Is the generic error 'connection closed' or something else
+		return $exception->errorInfo[1] === 7
+			? DbConnectionClosedException::fromException($exception)
+			: DbException::fromException($exception);
 	}
 }

@@ -126,7 +126,7 @@ class SimpleSelectQuery extends AbstractQuery {
 	 * @return T[]
 	 */
 	public function fetchAll(array|bool $deepFetch = true): array {
-		$stmt = $this->executeAndGetStatement();
+		$stmt = $this->callWithRetryOnClosed(fn() => $this->executeAndGetStatement());
 		return $this->connection->fetchAll($stmt, $this->classname, $deepFetch);
 	}
 
@@ -139,7 +139,7 @@ class SimpleSelectQuery extends AbstractQuery {
 	 * @noinspection PhpDocSignatureInspection
 	 */
 	public function fetchSingle(array|bool $deepFetch = true): Entity {
-		$stmt = $this->executeAndGetStatement();
+		$stmt = $this->callWithRetryOnClosed(fn() => $this->executeAndGetStatement());
 		return $this->connection->fetchSingle($stmt, $this->classname, $deepFetch);
 	}
 
@@ -153,7 +153,7 @@ class SimpleSelectQuery extends AbstractQuery {
 	 * @noinspection PhpDocSignatureInspection
 	 */
 	public function fetchFirst(array|bool $deepFetch = true): ?Entity {
-		$stmt = $this->executeAndGetStatement();
+		$stmt = $this->callWithRetryOnClosed(fn() => $this->executeAndGetStatement());
 		return $this->connection->fetchFirst($stmt, $this->classname, $deepFetch);
 	}
 

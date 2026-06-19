@@ -46,6 +46,7 @@ class Configuration {
 		}
 
 		$this->setDsn($config['dsn']);
+		ConfigurationManager::registerConfiguration($this);
 	}
 
 	public function getDsn(): Dsn {
