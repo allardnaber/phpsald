@@ -54,12 +54,14 @@ class ConnectionManager {
 		}
 		(new HostCache())->deleteHostForConfiguration($checksum);
 
-		// reconnect for older connections, for new connections this is most likely not the solution.
-		if (time() - $c->getCreated() < self::RECONNECT_THRESHOLD) return null;
-
 		$origConfig = ConfigurationManager::getConfiguration($checksum);
-		if ($origConfig === null) return null;
+		$origConfig?->getLogger()?->warning(sprintf(
+			'Current connection is being invalidated, connected since %s',
+			date('Y-m-d H:i:s', $c->getCreated()
+			)));
 
+		// reconnect for older connections, for new connections this is most likely not the solution.
+		if ($origConfig === null || time() - $c->getCreated() < self::RECONNECT_THRESHOLD) return null;
 		return ConnectionManager::get($origConfig);
 	}
 

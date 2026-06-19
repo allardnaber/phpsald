@@ -157,11 +157,6 @@ class Connection extends PDO implements LoggerAwareInterface {
 		return $this->created;
 	}
 
-	public function invalidate(): void {
-		$this->logger?->warning(sprintf('Current connection is being invalidated, connected since %s', date('Y-m-d H:i:s', $this->created)));
-		ConnectionManager::invalidateConnection($this);
-	}
-
 	/**
 	 * @template T extends Entity
 	 * @param PDOStatement $statement
