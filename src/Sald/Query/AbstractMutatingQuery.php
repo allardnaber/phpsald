@@ -19,6 +19,10 @@ abstract class AbstractMutatingQuery extends AbstractQuery {
 	}
 
 	public function execute(): bool {
+		return $this->callWithRetryOnClosed(fn() => $this->executeImpl());
+	}
+
+	private function executeImpl(): bool {
 		$this->stmt = $this->connection->prepare($this->getSQL());
 		$this->bindValues($this->stmt);
 		$this->bindValuesFromQueryParams($this->stmt, $this->mutations);

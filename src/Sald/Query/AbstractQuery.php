@@ -4,8 +4,11 @@ namespace Sald\Query;
 
 use PDO;
 use PDOStatement;
+use Sald\Connection\ConfigurationManager;
 use Sald\Connection\Connection;
+use Sald\Connection\ConnectionManager;
 use Sald\Entities\Mapper\InputMapper;
+use Sald\Exception\Db\Connection\DbConnectionClosedException;
 use Sald\Exception\IncompleteDataException;
 use Sald\Metadata\TableMetadata;
 use Sald\Query\Expression\ArrayComparator;
@@ -163,6 +166,20 @@ abstract class AbstractQuery {
 			'integer' => PDO::PARAM_INT,
 			default => PDO::PARAM_STR,
 		};
+	}
+
+	protected function callWithRetryOnClosed(callable $callable): mixed {
+		try {
+			return $callable();
+		} catch (DbConnectionClosedException $e) {
+			$newConnection = ConnectionManager::invalidateAndReconnect($this->connection);
+			if ($newConnection !== null) {
+				$this->connection = $newConnection;
+				return $callable();
+			} else {
+				throw $e;
+			}
+		}
 	}
 
 }

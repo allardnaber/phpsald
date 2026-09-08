@@ -23,7 +23,12 @@ class Connection extends PDO implements LoggerAwareInterface {
 
 	use LoggerAwareTrait;
 
-	public function __construct(private readonly Configuration $config) {
+	private string $configChecksum;
+	private int $created;
+
+	public function __construct(private readonly Configuration $config, ?string $checksumOverride = null) {
+		$this->configChecksum = $checksumOverride ?? $this->config->getChecksum();
+		$this->created = time();
 		$options = $config->getOptions();
 		$options[PDO::ATTR_ERRMODE] = PDO::ERRMODE_EXCEPTION;
 		$options[PDO::ATTR_DEFAULT_FETCH_MODE] = PDO::FETCH_ASSOC;
@@ -142,6 +147,14 @@ class Connection extends PDO implements LoggerAwareInterface {
 		} catch (PDOException $e) {
 			throw DbErrorHandler::getDbExceptionWithConnection($e, $this);
 		}
+	}
+
+	public function getConfigChecksum(): string {
+		return $this->configChecksum;
+	}
+
+	public function getCreated(): int {
+		return $this->created;
 	}
 
 	/**
