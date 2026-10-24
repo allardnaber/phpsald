@@ -148,6 +148,10 @@ class Entity implements JsonSerializable {
 		return array_key_exists($name, $this->__int_fields) && $this->__int_fields[$name] !== null;
 	}
 
+	public function __unset(string $name): void {
+		unset($this->__int_fields[$name]);
+	}
+
 	/**
 	 * Creates a select query to retrieve one or more instances if this entity.
 	 * @param Configuration|null $config Configuration to get a specific connection, use default connection if omitted.
@@ -242,8 +246,10 @@ class Entity implements JsonSerializable {
 		);
 	}
 
-	private static function mapEnumValue(string $enumType, string $value): \UnitEnum {
-		return $enumType::{$value};
+	private static function mapEnumValue(string $enumType, string $value): \UnitEnum|\BackedEnum|null {
+		return is_subclass_of($enumType, \BackedEnum::class)
+			? $enumType::tryFrom($value)
+			: $enumType::{$value};
 	}
 
 	private static function collectJsonSerializableFields(): void {
@@ -261,6 +267,12 @@ class Entity implements JsonSerializable {
 
 		// use field names as indices for efficient lookup
 		self::$jsonSerializableFields[static::class] = array_flip($fieldNames);
+	}
+
+	public function __debugInfo(): ?array {
+		$result = get_object_vars($this);
+		$result['__int_connection'] = '*' . Connection::class;
+		return $result;
 	}
 
 }
